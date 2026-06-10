@@ -1,538 +1,408 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DROPS分析ダッシュボード - 感性の価値化</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<style>
-:root{--bg:#0f1117;--surface:#1a1d27;--surface2:#232736;--border:#2e3348;--text:#e4e6f0;--text2:#9498b0;--accent:#4f8cff;--accent2:#6c5ce7;--accent3:#00cec9;--danger:#ff6b6b;--success:#51cf66;--warn:#ffd43b;--radius:10px;--shadow:0 4px 24px rgba(0,0,0,0.3)}
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI','Hiragino Sans','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-header{background:linear-gradient(135deg,#1a1d27 0%,#232736 100%);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1000}
-header h1{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-header .subtitle{font-size:.78rem;color:var(--text2)}
-.badge{background:var(--accent);color:#fff;font-size:.65rem;padding:2px 8px;border-radius:10px;margin-left:8px}
-.layout{display:flex;flex:1;overflow:hidden}
-.sidebar{width:280px;min-width:280px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.sidebar h3{font-size:.8rem;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
-.filter-group{background:var(--surface2);border-radius:var(--radius);padding:12px}
-.filter-group label{display:block;font-size:.75rem;color:var(--text2);margin-bottom:4px}
-.filter-group select,.filter-group input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-size:.8rem;outline:none}
-.filter-group select:focus,.filter-group input:focus{border-color:var(--accent)}
-.btn{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;transition:.2s}
-.btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}.btn-secondary:hover{background:var(--border)}
-.main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
-.tabs{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:var(--radius);flex-wrap:wrap}
-.tab{padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text2);transition:.2s;border:none;background:transparent}
-.tab:hover{color:var(--text);background:var(--surface2)}
-.tab.active{background:var(--accent);color:#fff}
-.tab-content{display:none}.tab-content.active{display:block}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
-.card h2{font-size:1rem;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.card h2 .icon{font-size:1.1rem}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.stat-card{background:var(--surface2);border-radius:var(--radius);padding:16px;text-align:center}
-.stat-card .val{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-card .lbl{font-size:.72rem;color:var(--text2);margin-top:4px}
-.chart-container{position:relative;width:100%;max-height:400px}
-.chart-container canvas{width:100%!important}
-.tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:.7rem;color:var(--text2);margin:2px}
-.tag.highlight{border-color:var(--accent);color:var(--accent)}
-.map-fullcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;box-shadow:var(--shadow)}
-.map-fullcard h2{font-size:1rem;margin:8px 12px;display:flex;align-items:center;gap:8px}
-#map{width:100%;height:calc(100vh - 160px);border-radius:var(--radius);z-index:1}
-.post-list{display:flex;flex-direction:column;gap:10px;max-height:500px;overflow-y:auto}
-.post-item{display:flex;gap:12px;background:var(--surface2);border-radius:var(--radius);padding:12px;cursor:pointer;transition:.2s;border:1px solid transparent}
-.post-item:hover{border-color:var(--accent)}
-.post-item img{width:80px;height:80px;object-fit:cover;border-radius:8px;flex-shrink:0}
-.post-item .info{flex:1;min-width:0}
-.post-item .info .sentence{font-size:.8rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.post-item .meta{font-size:.68rem;color:var(--text2);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
-.modal-overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative}
-.modal .close{position:absolute;top:12px;right:16px;font-size:1.3rem;cursor:pointer;color:var(--text2);background:none;border:none}
-.modal .close:hover{color:var(--text)}
-.modal h2{margin-bottom:16px;font-size:1.1rem}
-.modal img{max-width:100%;border-radius:var(--radius);margin-bottom:12px}
-.modal table{width:100%;border-collapse:collapse;font-size:.82rem}
-.modal table th,.modal table td{padding:8px;border-bottom:1px solid var(--border);text-align:left}
-.modal table th{color:var(--accent);font-weight:600}
-.score-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;min-width:60px}
-.score-bar .fill{height:100%;border-radius:3px;transition:.3s}
-.anomaly-table{width:100%;border-collapse:collapse;font-size:.8rem}
-.anomaly-table th,.anomaly-table td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
-.anomaly-table th{color:var(--text2);font-weight:600;font-size:.72rem;text-transform:uppercase}
-.anomaly-table tr{cursor:pointer;transition:.15s}.anomaly-table tr:hover{background:var(--surface2)}
-.anomaly-high{color:var(--success)}.anomaly-low{color:var(--danger)}
-#network{width:100%;height:500px;border-radius:var(--radius);background:var(--bg)}
-.tooltip-wb{position:relative;cursor:help;border-bottom:1px dotted var(--text2)}
-.tooltip-wb:hover::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);padding:8px 12px;border-radius:6px;font-size:.72rem;white-space:pre-line;width:220px;z-index:100;border:1px solid var(--border);box-shadow:var(--shadow)}
-.rank-toggle{display:flex;gap:4px;margin-bottom:8px}
-.rank-toggle button{padding:4px 12px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:.72rem;transition:.2s}
-.rank-toggle button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.slider-group{display:flex;align-items:center;gap:8px}
-.slider-group input[type=range]{flex:1;accent-color:var(--accent)}
-.slider-group .val{font-size:.75rem;color:var(--accent);min-width:24px;text-align:center}
-.filter-note{font-size:.7rem;color:var(--accent3);line-height:1.5;padding:4px 0}
-@media(max-width:900px){.sidebar{width:100%;min-width:unset;max-height:40vh}.layout{flex-direction:column}.grid3{grid-template-columns:1fr}#map{height:calc(100vh - 200px)}}
-</style>
-</head>
-<body>
-<header>
-<div>
-<h1>DROPS分析ダッシュボード</h1>
-<div class="subtitle">感性の価値化 — ウェルビーイング指標による投稿分析</div>
-</div>
-<span class="badge" id="postCount">0 投稿</span>
-<span class="badge" style="background:var(--accent2)" id="filteredCount">0 表示中</span>
-</header>
-<div class="layout">
-<aside class="sidebar">
-<h3>🔍 フィルター</h3>
-<div class="filter-note">※ フィルタは選択時に自動反映されます</div>
-<div class="filter-group"><label>イベント種別 (tenant)</label><select id="fTenant"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>性別 (gender)</label><select id="fGender"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>年代 (age_group)</label><select id="fAge"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>エリアグループ</label><select id="fAreaGroup"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>エリア</label><select id="fArea"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>WB指標 (category)</label><select id="fCategory"><option value="">すべて</option></select></div>
-<div class="filter-group"><label>投稿日（開始）</label><input type="date" id="fDateFrom"></div>
-<div class="filter-group"><label>投稿日（終了）</label><input type="date" id="fDateTo"></div>
-<button class="btn btn-secondary" onclick="resetFilters()" style="width:100%">🔄 リセット</button>
-<div class="filter-group"><label>エリア分析：最低投稿数</label><div class="slider-group"><input type="range" id="minPosts" min="1" max="20" value="1"><span class="val" id="minPostsVal">1</span></div></div>
-</aside>
-<main class="main">
-<div class="tabs" id="tabBar">
-<button class="tab active" data-tab="overview">📊 概要</button>
-<button class="tab" data-tab="area">🗺️ エリア分析</button>
-<button class="tab" data-tab="anomaly">🔬 特異スコア</button>
-<button class="tab" data-tab="posts">📝 投稿一覧</button>
-<button class="tab" data-tab="mapview">📍 地図</button>
-<button class="tab" data-tab="network">🔗 共起ネットワーク</button>
-</div>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DROPS分析ダッシュボード - 感性の価値化</title>
 
-<!-- 概要 -->
-<div class="tab-content active" id="tc-overview">
-<div class="grid3" id="statCards"></div>
-<div class="card">
-<h2><span class="icon">📊</span> ウェルビーイング指標別スコア分布</h2>
-<div class="rank-toggle" id="rankToggle">
-<button class="active" data-rank="top1">Top1</button>
-<button data-rank="top2">Top2</button>
-<button data-rank="top3">Top3</button>
-<button data-rank="all">すべて</button>
-</div>
-<div class="chart-container"><canvas id="chartCategoryBar"></canvas></div>
-</div>
-<div class="card">
-<h2><span class="icon">📈</span> 指標別 平均スコア</h2>
-<div class="chart-container"><canvas id="chartAvgScore"></canvas></div>
-</div>
-<div class="card">
-<h2><span class="icon">🏷️</span> 指標別キーワード（reason）</h2>
-<div id="reasonTags"></div>
-</div>
-</div>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 
-<!-- エリア分析 -->
-<div class="tab-content" id="tc-area">
-<div class="card">
-<h2><span class="icon">🗺️</span> エリア別レーダーチャート比較</h2>
-<div class="chart-container" style="max-height:500px"><canvas id="chartRadar"></canvas></div>
-</div>
-<div class="card">
-<h2><span class="icon">📊</span> エリア別投稿数</h2>
-<div class="chart-container"><canvas id="chartAreaBar"></canvas></div>
-</div>
-</div>
+  <style>
+    :root{
+      --bg:#0f1117;
+      --surface:#1a1d27;
+      --surface2:#232736;
+      --border:#2e3348;
+      --text:#e4e6f0;
+      --text2:#9498b0;
+      --accent:#4f8cff;
+      --accent2:#6c5ce7;
+      --accent3:#00cec9;
+      --danger:#ff6b6b;
+      --success:#51cf66;
+      --warn:#ffd43b;
+      --radius:12px;
+      --shadow:0 4px 24px rgba(0,0,0,0.28);
+      --headerH:68px;
+      --mainPad:20px;
+      --mapTitleH:44px;
+    }
 
-<!-- 特異スコア -->
-<div class="tab-content" id="tc-anomaly">
-<div class="card">
-<h2><span class="icon">🔬</span> 特異スコア検出（全体平均との乖離が大きいエリア×指標）</h2>
-<p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均 − 全体平均。絶対値が大きい順に表示。行クリックで該当投稿を表示。</p>
-<div style="overflow-x:auto"><table class="anomaly-table" id="anomalyTable"><thead><tr><th>エリア</th><th>指標</th><th>エリア平均</th><th>全体平均</th><th>乖離度</th><th>件数</th></tr></thead><tbody></tbody></table></div>
-</div>
-<div class="card" id="anomalyPosts" style="display:none">
-<h2><span class="icon">📝</span> 該当投稿一覧</h2>
-<div class="post-list" id="anomalyPostList"></div>
-</div>
-</div>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:'Segoe UI','Hiragino Sans','Noto Sans JP',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
 
-<!-- 投稿一覧 -->
-<div class="tab-content" id="tc-posts">
-<div class="card">
-<h2><span class="icon">📝</span> 投稿一覧 <span id="postsShown" style="font-size:.75rem;color:var(--text2)"></span></h2>
-<div class="post-list" id="postList"></div>
-</div>
-</div>
+    ::-webkit-scrollbar{width:7px;height:7px}
+    ::-webkit-scrollbar-track{background:var(--surface)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
 
-<!-- 地図 -->
-<div class="tab-content" id="tc-mapview">
-<div class="map-fullcard">
-<h2><span class="icon">📍</span> 投稿位置マップ</h2>
-<div id="map"></div>
-</div>
-</div>
+    header{
+      height:var(--headerH);
+      background:linear-gradient(135deg,#1a1d27 0%,#232736 100%);
+      border-bottom:1px solid var(--border);
+      padding:14px 24px;
+      display:flex;
+      align-items:center;
+      gap:16px;
+      position:sticky;
+      top:0;
+      z-index:1000;
+      flex-shrink:0;
+    }
 
-<!-- 共起ネットワーク -->
-<div class="tab-content" id="tc-network">
-<div class="card"><h2><span class="icon">🔗</span> キーワード共起ネットワーク（reason由来）</h2><svg id="network"></svg></div>
-</div>
-</main>
-</div>
+    header h1{
+      font-size:1.18rem;
+      font-weight:700;
+      background:linear-gradient(135deg,var(--accent),var(--accent3));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
 
-<!-- モーダル -->
-<div class="modal-overlay" id="modalOverlay">
-<div class="modal" id="modalContent">
-<button class="close" onclick="closeModal()">&times;</button>
-<div id="modalBody"></div>
-</div>
-</div>
+    header .subtitle{
+      font-size:.78rem;
+      color:var(--text2);
+    }
 
-<script>
-const categoryDescriptions={
-"美しい周辺環境":"自然景観や建築美など、視覚的な美しさに関する感性価値",
-"文化の創造":"歴史・芸術・伝統文化など、文化的価値の創出や継承に関する指標",
-"楽しさ":"ワクワク感や娯楽性など、楽しい体験に関する感性価値",
-"快適な生活":"住みやすさ・利便性・居心地の良さに関する指標",
-"コミュニティとの繋がり":"地域社会との交流や共同体意識に関する指標",
-"先進的な生活":"革新的技術・先端的なライフスタイルに関する指標",
-"自身の成長":"学びや自己啓発、個人の成長に関する指標",
-"趣味・嗜好":"個人の好みや趣味活動に関する感性価値"
-};
-const COLORS=['#4f8cff','#6c5ce7','#00cec9','#ff6b6b','#ffd43b','#51cf66','#fd79a8','#e17055','#74b9ff','#a29bfe','#55efc4','#fab1a0'];
-let rawData=[],filteredData=[],uniquePosts=[];
-let leafletMap=null,markerGroup=null;
-let chartCategoryBar=null,chartAvgScore=null,chartRadar=null,chartAreaBar=null;
-let currentRanks=['top1'];
+    .badge{
+      background:var(--accent);
+      color:#fff;
+      font-size:.68rem;
+      padding:4px 10px;
+      border-radius:999px;
+      margin-left:4px;
+      white-space:nowrap;
+    }
 
-// ===== データ読み込み =====
-async function loadData(){
-try{
-const r=await fetch('drop.json');
-if(!r.ok)throw new Error('drop.json が見つかりません');
-rawData=await r.json();
-initFilters();bindFilterEvents();applyFilters();
-}catch(e){
-document.querySelector('.main').innerHTML='<div class="card"><h2>⚠️ データ読み込みエラー</h2><p>'+e.message+'</p><p style="margin-top:8px;font-size:.8rem;color:var(--text2)">drop.json を index.html と同じディレクトリに配置してください。</p></div>';
-}}
+    .layout{
+      display:flex;
+      flex:1;
+      min-height:0;
+      overflow:hidden;
+    }
 
-// ===== フィルター初期化 =====
-function initFilters(){
-const u=v=>[...new Set(rawData.map(d=>d[v]).filter(Boolean))].sort();
-populateSelect('fTenant',u('tenant'));
-populateSelect('fGender',u('gender'));
-populateSelect('fAge',u('age_group'));
-populateSelect('fAreaGroup',u('nearest_AreaGroup'));
-populateSelect('fArea',u('nearest_Area'));
-populateSelect('fCategory',[...new Set(rawData.filter(d=>d.category).map(d=>d.category))].sort());
-}
-function populateSelect(id,opts){
-const s=document.getElementById(id);const cur=s.value;
-while(s.options.length>1)s.remove(1);
-opts.forEach(o=>{const op=document.createElement('option');op.value=o;op.text=o;s.add(op)});
-s.value=cur||'';
-}
+    .sidebar{
+      width:290px;
+      min-width:290px;
+      background:var(--surface);
+      border-right:1px solid var(--border);
+      overflow-y:auto;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      flex-shrink:0;
+    }
 
-// ===== フィルター自動反映イベント =====
-function bindFilterEvents(){
-['fTenant','fGender','fAge','fAreaGroup','fArea','fCategory'].forEach(id=>{
-document.getElementById(id).addEventListener('change',applyFilters);
-});
-['fDateFrom','fDateTo'].forEach(id=>{
-const el=document.getElementById(id);
-el.addEventListener('change',applyFilters);
-el.addEventListener('input',applyFilters);
-});
-}
+    .sidebar h3{
+      font-size:.8rem;
+      color:var(--accent);
+      text-transform:uppercase;
+      letter-spacing:1px;
+      margin-bottom:2px;
+    }
 
-// ===== フィルター適用 =====
-function applyFilters(){
-const fT=document.getElementById('fTenant').value;
-const fG=document.getElementById('fGender').value;
-const fA=document.getElementById('fAge').value;
-const fAG=document.getElementById('fAreaGroup').value;
-const fAR=document.getElementById('fArea').value;
-const fC=document.getElementById('fCategory').value;
-const fDF=document.getElementById('fDateFrom').value;
-const fDT=document.getElementById('fDateTo').value;
-filteredData=rawData.filter(d=>{
-if(fT&&d.tenant!==fT)return false;
-if(fG&&d.gender!==fG)return false;
-if(fA&&d.age_group!==fA)return false;
-if(fAG&&d.nearest_AreaGroup!==fAG)return false;
-if(fAR&&d.nearest_Area!==fAR)return false;
-if(fC&&d.category!==fC)return false;
-if(fDF||fDT){const pd=parseDate(d.post_dated_at);if(pd){
-if(fDF&&pd<new Date(fDF))return false;
-if(fDT){const ed=new Date(fDT);ed.setDate(ed.getDate()+1);if(pd>=ed)return false;}
-}}return true;
-});
-const seen=new Set();uniquePosts=[];
-filteredData.forEach(d=>{if(!seen.has(d.artwork_id)){seen.add(d.artwork_id);uniquePosts.push(d);}});
-document.getElementById('postCount').textContent=getUniqueCount(rawData)+' 投稿';
-document.getElementById('filteredCount').textContent=uniquePosts.length+' 表示中';
-renderAll();
-}
-function resetFilters(){
-['fTenant','fGender','fAge','fAreaGroup','fArea','fCategory'].forEach(id=>document.getElementById(id).value='');
-document.getElementById('fDateFrom').value='';document.getElementById('fDateTo').value='';
-applyFilters();
-}
-function parseDate(s){if(!s)return null;return new Date(s.replace(/\//g,'-'));}
-function getUniqueCount(data){return new Set(data.map(d=>d.artwork_id)).size;}
-function renderAll(){renderStats();renderCategoryChart();renderAvgScoreChart();renderReasonTags();renderAreaAnalysis();renderAnomalies();renderPosts();renderMap();renderNetwork();}
+    .filter-note{
+      font-size:.72rem;
+      color:var(--accent3);
+      line-height:1.5;
+      margin-top:-4px;
+    }
 
-// ===== 統計カード =====
-function renderStats(){
-const c=document.getElementById('statCards');
-const top1=filteredData.filter(d=>d.rank==='top1');
-const scores=top1.map(d=>Number(d.score)).filter(s=>!isNaN(s));
-const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10:'-';
-const cats=new Set(filteredData.map(d=>d.category).filter(Boolean));
-c.innerHTML=`<div class="stat-card"><div class="val">${uniquePosts.length}</div><div class="lbl">投稿数</div></div>
-<div class="stat-card"><div class="val">${avg}</div><div class="lbl">Top1 平均スコア</div></div>
-<div class="stat-card"><div class="val">${cats.size}</div><div class="lbl">検出カテゴリ数</div></div>`;
-}
+    .filter-group{
+      background:var(--surface2);
+      border-radius:var(--radius);
+      padding:12px;
+    }
 
-// ===== カテゴリ棒グラフ =====
-function renderCategoryChart(){
-const ranks=currentRanks[0]==='all'?['top1','top2','top3']:currentRanks;
-const rd=filteredData.filter(d=>ranks.includes(d.rank)&&d.category);
-const catMap={};
-rd.forEach(d=>{if(!catMap[d.category])catMap[d.category]={count:0,total:0,n:0};catMap[d.category].count++;const s=Number(d.score);if(!isNaN(s)){catMap[d.category].total+=s;catMap[d.category].n++;}});
-const labels=Object.keys(catMap).sort((a,b)=>catMap[b].count-catMap[a].count);
-const counts=labels.map(l=>catMap[l].count);
-if(chartCategoryBar)chartCategoryBar.destroy();
-chartCategoryBar=new Chart(document.getElementById('chartCategoryBar').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'投稿数',data:counts,backgroundColor:labels.map((_,i)=>COLORS[i%COLORS.length]+'cc'),borderColor:labels.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:function(c){const m=catMap[labels[c.dataIndex]];return '平均スコア: '+(m.n?Math.round(m.total/m.n*10)/10:'-');}}}},scales:{x:{ticks:{color:'#9498b0',font:{size:11}},grid:{display:false}},y:{ticks:{color:'#9498b0'},grid:{color:'#2e334833'}}}}});
-}
+    .filter-group label{
+      display:block;
+      font-size:.75rem;
+      color:var(--text2);
+      margin-bottom:6px;
+    }
 
-// ===== 平均スコア =====
-function renderAvgScoreChart(){
-const top1=filteredData.filter(d=>d.rank==='top1'&&d.category);
-const catMap={};
-top1.forEach(d=>{if(!catMap[d.category])catMap[d.category]={total:0,n:0};const s=Number(d.score);if(!isNaN(s)){catMap[d.category].total+=s;catMap[d.category].n++;}});
-const labels=Object.keys(catMap).sort();
-const avgs=labels.map(l=>catMap[l].n?Math.round(catMap[l].total/catMap[l].n*10)/10:0);
-if(chartAvgScore)chartAvgScore.destroy();
-chartAvgScore=new Chart(document.getElementById('chartAvgScore').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'平均スコア (Top1)',data:avgs,backgroundColor:labels.map((_,i)=>COLORS[i%COLORS.length]+'99'),borderColor:labels.map((_,i)=>COLORS[i%COLORS.length]),borderWidth:2,borderRadius:6}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{min:0,max:100,ticks:{color:'#9498b0'},grid:{color:'#2e334833'}},y:{ticks:{color:'#9498b0',font:{size:11}},grid:{display:false}}}}});
-}
+    .filter-group select,
+    .filter-group input{
+      width:100%;
+      background:var(--bg);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:8px;
+      font-size:.82rem;
+      outline:none;
+    }
 
-// ===== Reasonタグ =====
-function renderReasonTags(){
-const el=document.getElementById('reasonTags');
-const top1=filteredData.filter(d=>d.rank==='top1'&&d.category&&d.reason);
-const catReasons={};
-top1.forEach(d=>{if(!catReasons[d.category])catReasons[d.category]={};
-d.reason.split(/[,、，]/).map(r=>r.trim()).filter(Boolean).forEach(r=>{catReasons[d.category][r]=(catReasons[d.category][r]||0)+1;});});
-let html='';
-Object.keys(catReasons).sort().forEach(cat=>{
-html+='<div style="margin-bottom:14px"><strong class="tooltip-wb" data-tip="'+(categoryDescriptions[cat]||'')+'">'+cat+'</strong><br>';
-Object.entries(catReasons[cat]).sort((a,b)=>b[1]-a[1]).forEach(([kw,cnt])=>{html+='<span class="tag'+(cnt>1?' highlight':'')+'">'+kw+(cnt>1?' ('+cnt+')':'')+'</span>';});
-html+='</div>';});
-el.innerHTML=html;
-}
+    .filter-group select:focus,
+    .filter-group input:focus{
+      border-color:var(--accent);
+    }
 
-// ===== エリア分析 =====
-function renderAreaAnalysis(){
-const minP=parseInt(document.getElementById('minPosts').value)||1;
-const top1=filteredData.filter(d=>d.rank==='top1'&&d.category);
-const areaData={};
-top1.forEach(d=>{const area=d.nearest_AreaGroup||d.nearest_Area||'不明';
-if(!areaData[area])areaData[area]={posts:new Set(),cats:{}};
-areaData[area].posts.add(d.artwork_id);
-if(!areaData[area].cats[d.category])areaData[area].cats[d.category]={total:0,n:0};
-const s=Number(d.score);if(!isNaN(s)){areaData[area].cats[d.category].total+=s;areaData[area].cats[d.category].n++;}});
-const areas=Object.keys(areaData).filter(a=>areaData[a].posts.size>=minP);
-const allCats=[...new Set(top1.map(d=>d.category))].sort();
-if(chartRadar)chartRadar.destroy();
-const ds=areas.map((area,i)=>{
-const data=allCats.map(cat=>{const c=areaData[area].cats[cat];return c&&c.n?Math.round(c.total/c.n*10)/10:0;});
-return{label:area+' ('+areaData[area].posts.size+'件)',data,borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'22',pointBackgroundColor:COLORS[i%COLORS.length],pointRadius:3,borderWidth:2};});
-chartRadar=new Chart(document.getElementById('chartRadar').getContext('2d'),{type:'radar',data:{labels:allCats,datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{r:{grid:{color:'#2e334855'},angleLines:{color:'#2e334855'},pointLabels:{color:'#9498b0',font:{size:11}},ticks:{color:'#9498b0',backdropColor:'transparent'},min:0,max:100}},plugins:{legend:{labels:{color:'#e4e6f0',font:{size:11}}}}}});
-if(chartAreaBar)chartAreaBar.destroy();
-const al=areas.sort((a,b)=>areaData[b].posts.size-areaData[a].posts.size);
-chartAreaBar=new Chart(document.getElementById('chartAreaBar').getContext('2d'),{type:'bar',data:{labels:al,datasets:[{label:'投稿数',data:al.map(a=>areaData[a].posts.size),backgroundColor:al.map((_,i)=>COLORS[i%COLORS.length]+'cc'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9498b0'},grid:{display:false}},y:{ticks:{color:'#9498b0'},grid:{color:'#2e334833'}}}}});
-}
+    .btn{
+      width:100%;
+      padding:10px 14px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:.82rem;
+      font-weight:600;
+      transition:.2s;
+    }
 
-// ===== 特異スコア =====
-function renderAnomalies(){
-const top1=filteredData.filter(d=>d.rank==='top1'&&d.category);
-const globalCat={};
-top1.forEach(d=>{if(!globalCat[d.category])globalCat[d.category]={total:0,n:0};const s=Number(d.score);if(!isNaN(s)){globalCat[d.category].total+=s;globalCat[d.category].n++;}});
-const globalAvg={};Object.keys(globalCat).forEach(c=>{globalAvg[c]=globalCat[c].n?globalCat[c].total/globalCat[c].n:0;});
-const areaCat={};
-top1.forEach(d=>{const area=d.nearest_AreaGroup||d.nearest_Area||'不明';const key=area+'|||'+d.category;
-if(!areaCat[key])areaCat[key]={area,category:d.category,total:0,n:0,ids:[]};
-const s=Number(d.score);if(!isNaN(s)){areaCat[key].total+=s;areaCat[key].n++;}areaCat[key].ids.push(d.artwork_id);});
-const anomalies=Object.values(areaCat).filter(a=>a.n>=1).map(a=>{
-const avg=a.total/a.n;const diff=avg-globalAvg[a.category];
-return{...a,avg:Math.round(avg*10)/10,globalAvg:Math.round(globalAvg[a.category]*10)/10,diff:Math.round(diff*10)/10};
-}).sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));
-const tbody=document.querySelector('#anomalyTable tbody');tbody.innerHTML='';
-anomalies.slice(0,30).forEach(a=>{
-const tr=document.createElement('tr');const cls=a.diff>0?'anomaly-high':'anomaly-low';
-tr.innerHTML='<td>'+a.area+'</td><td>'+a.category+'</td><td>'+a.avg+'</td><td>'+a.globalAvg+'</td><td class="'+cls+'">'+(a.diff>0?'+':'')+a.diff+'</td><td>'+a.n+'</td>';
-tr.addEventListener('click',()=>showAnomalyPosts(a));tbody.appendChild(tr);});
-}
-function showAnomalyPosts(a){
-const panel=document.getElementById('anomalyPosts');panel.style.display='block';
-const list=document.getElementById('anomalyPostList');
-const ids=new Set(a.ids);
-list.innerHTML='';
-filteredData.filter(d=>ids.has(d.artwork_id)&&d.rank==='top1').forEach(p=>list.appendChild(createPostItem(p)));
-panel.scrollIntoView({behavior:'smooth'});
-}
+    .btn-secondary{
+      background:var(--surface2);
+      color:var(--text2);
+      border:1px solid var(--border);
+    }
+    .btn-secondary:hover{background:var(--border);color:var(--text)}
 
-// ===== 投稿一覧 =====
-function renderPosts(){
-const list=document.getElementById('postList');list.innerHTML='';
-const show=uniquePosts.slice(0,100);
-document.getElementById('postsShown').textContent='('+show.length+'/'+uniquePosts.length+'件表示)';
-show.forEach(p=>{list.appendChild(createPostItem(filteredData.find(d=>d.artwork_id===p.artwork_id&&d.rank==='top1')||p));});
-}
-function createPostItem(p){
-const div=document.createElement('div');div.className='post-item';
-const sv=p.score!==''&&p.score!==undefined?p.score:'-';
-div.innerHTML='<img src="'+(p.image_file_path_thumbnail||'')+'" alt="" onerror="this.style.display=\'none\'"><div class="info"><div class="sentence">'+(p.sentence||'')+'</div><div class="meta"><span>📍 '+(p.nearest_Area||'')+'</span><span>👤 '+(p.gender||'')+' '+(p.age_group||'')+'</span><span>🏷️ '+(p.category||'')+': '+sv+'</span></div></div>';
-div.addEventListener('click',()=>openModal(p.artwork_id));return div;
-}
+    .slider-group{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .slider-group input[type=range]{flex:1;accent-color:var(--accent)}
+    .slider-group .val{
+      font-size:.75rem;
+      color:var(--accent);
+      min-width:24px;
+      text-align:center;
+      font-weight:700;
+    }
 
-// ===== モーダル =====
-function openModal(artId){
-const records=filteredData.filter(d=>d.artwork_id===artId);if(!records.length)return;
-const p=records[0];
-const ranks=records.sort((a,b)=>{const o={top1:1,top2:2,top3:3};return(o[a.rank]||9)-(o[b.rank]||9);});
-let html='<h2>📝 投稿詳細</h2>';
-if(p.image_file_path_thumbnail)html+='<img src="'+p.image_file_path_thumbnail+'" alt="投稿画像" onerror="this.style.display=\'none\'">';
-html+='<p style="margin-bottom:12px;line-height:1.6">'+(p.sentence||'')+'</p>';
-html+='<table><tr><th>性別</th><td>'+(p.gender||'-')+'</td></tr><tr><th>年代</th><td>'+(p.age_group||'-')+' ('+(p.age_group_half||'-')+')</td></tr><tr><th>投稿日時</th><td>'+(p.post_dated_at||'-')+'</td></tr><tr><th>エリア</th><td>'+(p.nearest_AreaGroup||'')+' / '+(p.nearest_Area||'')+'</td></tr><tr><th>座標</th><td>'+(p.latitude||'-')+', '+(p.longitude||'-')+'</td></tr></table>';
-html+='<h3 style="margin:16px 0 8px;font-size:.9rem">ウェルビーイング指標 Top1〜3</h3><table><tr><th>順位</th><th>指標</th><th>スコア</th><th>根拠</th></tr>';
-ranks.forEach(r=>{
-const sv=r.score!==''&&r.score!==undefined?r.score:'-';const pct=sv!=='-'?sv:0;
-html+='<tr><td>'+(r.rank||'-')+'</td><td><span class="tooltip-wb" data-tip="'+(categoryDescriptions[r.category]||'')+'">'+(r.category||'-')+'</span></td><td><div style="display:flex;align-items:center;gap:8px">'+sv+'<div class="score-bar" style="width:80px"><div class="fill" style="width:'+pct+'%;background:'+(pct>=70?'var(--success)':pct>=40?'var(--warn)':'var(--danger)')+'"></div></div></div></td><td>'+(r.reason||'').split(/[,、，]/).map(t=>t.trim()).filter(Boolean).map(t=>'<span class="tag">'+t+'</span>').join('')+'</td></tr>';
-});
-html+='</table>';
-document.getElementById('modalBody').innerHTML=html;
-document.getElementById('modalOverlay').classList.add('show');
-}
-function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
-document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+    .main{
+      flex:1;
+      min-width:0;
+      min-height:0;
+      overflow-y:auto;
+      padding:var(--mainPad);
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
 
-// ===== 地図（フルサイズ＋投稿密度中心） =====
-function renderMap(){
-if(!leafletMap){
-leafletMap=L.map('map',{zoomControl:true}).setView([35.0,135.5],10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(leafletMap);
-markerGroup=L.layerGroup().addTo(leafletMap);
-setTimeout(()=>leafletMap.invalidateSize(),300);
-}
-markerGroup.clearLayers();
-const points=[];
-uniquePosts.forEach(p=>{
-if(!p.latitude||!p.longitude)return;
-const ll=[p.latitude,p.longitude];points.push(ll);
-const top1=filteredData.find(d=>d.artwork_id===p.artwork_id&&d.rank==='top1')||p;
-const m=L.circleMarker(ll,{radius:8,fillColor:'#4f8cff',color:'#fff',weight:2,fillOpacity:0.85});
-m.bindPopup('<div style="max-width:260px;font-size:.8rem"><b>'+(top1.category||'')+'</b> ('+(top1.score||'-')+')<br>'+(p.sentence||'').slice(0,100)+'…<br><small>'+(p.gender||'')+' '+(p.age_group||'')+'</small></div>');
-m.on('click',()=>openModal(p.artwork_id));
-markerGroup.addLayer(m);
-});
-if(points.length){
-// 投稿密度で重み付けした中心を計算
-const gridSize=0.005;const grid={};
-points.forEach(([lat,lng])=>{
-const key=Math.round(lat/gridSize)+'_'+Math.round(lng/gridSize);
-if(!grid[key])grid[key]={lat:0,lng:0,count:0};
-grid[key].lat+=lat;grid[key].lng+=lng;grid[key].count++;
-});
-let maxCell=null;let maxCount=0;
-Object.values(grid).forEach(cell=>{if(cell.count>maxCount){maxCount=cell.count;maxCell=cell;}});
-if(maxCell){
-const cLat=maxCell.lat/maxCell.count;
-const cLng=maxCell.lng/maxCell.count;
-leafletMap.setView([cLat,cLng],14);
-}else{
-leafletMap.fitBounds(points,{padding:[30,30]});
-}
-}
-}
+    .tabs{
+      display:flex;
+      gap:4px;
+      background:var(--surface);
+      padding:4px;
+      border-radius:var(--radius);
+      flex-wrap:wrap;
+      flex-shrink:0;
+    }
 
-// ===== 共起ネットワーク =====
-function renderNetwork(){
-const svg=d3.select('#network');svg.selectAll('*').remove();
-const width=svg.node().getBoundingClientRect().width||800;const height=500;
-svg.attr('width',width).attr('height',height);
-const cooccur={},kwCount={};
-filteredData.filter(d=>d.rank==='top1'&&d.reason).forEach(d=>{
-const kws=[...new Set(d.reason.split(/[,、，]/).map(r=>r.trim()).filter(Boolean))];
-kws.forEach(k=>{kwCount[k]=(kwCount[k]||0)+1;});
-for(let i=0;i<kws.length;i++){for(let j=i+1;j<kws.length;j++){
-const key=[kws[i],kws[j]].sort().join('|||');cooccur[key]=(cooccur[key]||0)+1;}}});
-const topKw=Object.entries(kwCount).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);
-const topSet=new Set(topKw);
-const nodes=topKw.map(k=>({id:k,count:kwCount[k]}));
-const links=[];
-Object.entries(cooccur).forEach(([key,val])=>{const[s,t]=key.split('|||');
-if(topSet.has(s)&&topSet.has(t)&&val>=1)links.push({source:s,target:t,value:val});});
-if(!nodes.length)return;
-const maxC=d3.max(nodes,d=>d.count)||1;
-const rScale=d3.scaleSqrt().domain([1,maxC]).range([5,22]);
-const maxL=d3.max(links,d=>d.value)||1;
-const wScale=d3.scaleLinear().domain([1,maxL]).range([1,5]);
-const sim=d3.forceSimulation(nodes)
-.force('link',d3.forceLink(links).id(d=>d.id).distance(80))
-.force('charge',d3.forceManyBody().strength(-120))
-.force('center',d3.forceCenter(width/2,height/2))
-.force('collide',d3.forceCollide().radius(d=>rScale(d.count)+10));
-const link=svg.append('g').selectAll('line').data(links).enter().append('line')
-.attr('stroke','#2e3348').attr('stroke-width',d=>wScale(d.value)).attr('stroke-opacity',0.6);
-const node=svg.append('g').selectAll('g').data(nodes).enter().append('g')
-.call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
-.on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
-node.append('circle').attr('r',d=>rScale(d.count)).attr('fill',(d,i)=>COLORS[i%COLORS.length]).attr('stroke','#fff').attr('stroke-width',1).attr('opacity',0.85);
-node.append('text').text(d=>d.id).attr('text-anchor','middle').attr('dy','0.35em').attr('fill','#e4e6f0')
-.attr('font-size',d=>Math.max(9,Math.min(13,rScale(d.count)))).attr('pointer-events','none');
-sim.on('tick',()=>{
-link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
-node.attr('transform',d=>'translate('+d.x+','+d.y+')');
-});
-}
+    .tab{
+      padding:9px 18px;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:.82rem;
+      font-weight:600;
+      color:var(--text2);
+      transition:.2s;
+      border:none;
+      background:transparent;
+    }
+    .tab:hover{color:var(--text);background:var(--surface2)}
+    .tab.active{background:var(--accent);color:#fff}
 
-// ===== タブ切替 =====
-document.querySelectorAll('.tab').forEach(t=>{
-t.addEventListener('click',function(){
-document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
-this.classList.add('active');
-document.getElementById('tc-'+this.dataset.tab).classList.add('active');
-if(this.dataset.tab==='mapview'){setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},200);}
-if(this.dataset.tab==='network'){renderNetwork();}
-});
-});
+    .tab-content{display:none}
+    .tab-content.active{display:block}
 
-// ===== ランク切替 =====
-document.querySelectorAll('#rankToggle button').forEach(b=>{
-b.addEventListener('click',function(){
-document.querySelectorAll('#rankToggle button').forEach(x=>x.classList.remove('active'));
-this.classList.add('active');currentRanks=[this.dataset.rank];renderCategoryChart();
-});
-});
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
 
-// ===== 最低投稿数スライダー =====
-document.getElementById('minPosts').addEventListener('input',function(){
-document.getElementById('minPostsVal').textContent=this.value;renderAreaAnalysis();
-});
+    .fullsize-card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:4px;
+      box-shadow:var(--shadow);
+    }
 
-// ===== 起動 =====
-loadData();
-</script>
-</body>
-</html>
+    .fullsize-card h2{
+      margin:8px 12px 10px;
+      font-size:1rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .card h2{
+      font-size:1rem;
+      margin-bottom:12px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .card h2 .icon,
+    .fullsize-card h2 .icon{font-size:1.08rem}
+
+    .grid3{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:16px;
+    }
+
+    .stat-card{
+      background:var(--surface2);
+      border-radius:var(--radius);
+      padding:16px;
+      text-align:center;
+      border:1px solid rgba(255,255,255,.03);
+    }
+
+    .stat-card .val{
+      font-size:1.8rem;
+      font-weight:700;
+      background:linear-gradient(135deg,var(--accent),var(--accent3));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .stat-card .lbl{
+      font-size:.74rem;
+      color:var(--text2);
+      margin-top:4px;
+    }
+
+    .chart-container{
+      position:relative;
+      width:100%;
+      max-height:420px;
+      min-height:360px;
+    }
+
+    .chart-container canvas{width:100%!important}
+
+    .rank-toggle{
+      display:flex;
+      gap:4px;
+      margin-bottom:8px;
+      flex-wrap:wrap;
+    }
+
+    .rank-toggle button{
+      padding:4px 12px;
+      border-radius:6px;
+      border:1px solid var(--border);
+      background:var(--surface2);
+      color:var(--text2);
+      cursor:pointer;
+      font-size:.72rem;
+      transition:.2s;
+    }
+
+    .rank-toggle button.active{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+
+    .tag{
+      display:inline-block;
+      background:var(--surface2);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:3px 10px;
+      font-size:.72rem;
+      color:var(--text2);
+      margin:2px;
+    }
+
+    .tag.highlight{
+      border-color:var(--accent);
+      color:var(--accent);
+    }
+
+    .tooltip-wb{
+      position:relative;
+      cursor:help;
+      border-bottom:1px dotted var(--text2);
+    }
+
+    .tooltip-wb:hover::after{
+      content:attr(data-tip);
+      position:absolute;
+      bottom:120%;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--surface2);
+      color:var(--text);
+      padding:8px 12px;
+      border-radius:8px;
+      font-size:.72rem;
+      white-space:pre-line;
+      width:220px;
+      z-index:100;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+    }
+
+    .post-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height:520px;
+      overflow-y:auto;
+    }
+
+    .post-item{
+      display:flex;
+      gap:12px;
+      background:var(--surface2);
+      border-radius:var(--radius);
+      padding:12px;
+      cursor:pointer;
+      transition:.2s;
+      border:1px solid transparent;
+    }
+    .post-item:hover{border-color:var(--accent)}
+
+    .post-item img{
+      width:86px;
+      height:86px;
+      object-fit:cover;
+      border-radius:10px;
+      flex-shrink:0;
+    }
+
+    .post-item .info{
+      flex:1;
+      min-width:0;
+    }
+
+    .post-item .sentence{
+      font-size:.82rem;
+      line-height:1.5;
+      display:-webkit-box;
+      -webkit-line-clamp:3;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+
+    .post-item .meta{
+      font-size:.7rem;
+      color:var(--text2);
+      margin-top:6px;
+      display:flex;
+      gap:8px;
+
