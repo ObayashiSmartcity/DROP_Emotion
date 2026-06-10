@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DROPS分析ダッシュボード - 感性の価値化</title>
 
-  <!-- 正しい CDN 読み込み -->
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
-  https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.jsscript>
-  https://unpkg.com/leaflet@1.9.4/dist/leaflet.jsscript>
-  https://d3js.org/d3.v7.min.jsscript>
-  ./config.jsscript>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="./config.js"></script>
 
   <style>
     :root {
@@ -846,876 +845,822 @@
   </div>
 
   <script>
-    var raw = [];
-    var flt = [];
-    var uniq = [];
-    var lmap = null;
-    var mgrp = null;
-    var ch1 = null;
-    var ch2 = null;
-    var ch3 = null;
-    var ch4 = null;
-    var cRanks = ['top1'];
-    var cTheme = window.DEFAULT_THEME || 'light';
+    (() => {
+      // 状態管理の一元化
+      const state = {
+        raw: [],
+        filteredRecs: [],
+        uniquePosts: [],
+        activeTab: 'ov',
+        currentRanks: ['top1'],
+        theme: window.DEFAULT_THEME || 'light',
+        map: null,
+        mapMarkerGroup: null,
+        charts: { ch1: null, ch2: null, ch3: null, ch4: null }
+      };
 
-    function E(id) {
-      return document.getElementById(id);
-    }
+      // 定数設定
+      const CONSTANTS = {
+        GRID_SPACING: 0.005,
+        NETWORK_DISTANCE: 80,
+        NETWORK_STRENGTH: -140
+      };
 
-    function GC() {
-      return window.COLOR_CONFIG[cTheme] || window.COLOR_CONFIG.light;
-    }
+      // DOMヘルパー
+      const $ = id => document.getElementById(id);
+      const getThemeValue = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const getColorConfig = () => window.COLOR_CONFIG[state.theme] || window.COLOR_CONFIG.light;
 
-    function CV(name) {
-      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    }
+      // 共通データ処理ユーティリティ
+      const getUniquePostCount = data => new Set(data.map(x => x.artwork_id)).size;
+      const parseCustomDate = s => s ? new Date(String(s).replace(/\//g, '-')) : null;
 
-    function uc(data) {
-      var m = {};
-      data.forEach(function(x) { m[x.artwork_id] = 1; });
-      return Object.keys(m).length;
-    }
-
-    function pD(s) {
-      return s ? new Date(String(s).replace(/\//g, '-')) : null;
-    }
-
-    function setTheme(t) {
-      cTheme = t;
-      document.documentElement.setAttribute('data-theme', t);
-      E('bl').className = t === 'light' ? 'on' : '';
-      E('bd').className = t === 'dark' ? 'on' : '';
-      localStorage.setItem('drops-theme', t);
-      if (raw.length) renderAll();
-    }
-
-    E('bl').addEventListener('click', function() { setTheme('light'); });
-    E('bd').addEventListener('click', function() { setTheme('dark'); });
-
-    (function restoreTheme() {
-      var s = localStorage.getItem('drops-theme');
-      if (s === 'light' || s === 'dark') setTheme(s);
-    })();
-
-    function loadData() {
-      var st = E('ls');
-
-      try {
-        if (typeof window.COLOR_CONFIG === 'undefined') {
-          throw new Error('config.js の読み込みに失敗しています');
-        }
-      } catch (e) {
-        st.className = 'st er';
-        st.textContent = '❌ ' + e.message;
-        return;
+      function setTheme(t) {
+        state.theme = t;
+        document.documentElement.setAttribute('data-theme', t);
+        $('bl').className = t === 'light' ? 'on' : '';
+        $('bd').className = t === 'dark' ? 'on' : '';
+        localStorage.setItem('drops-theme', t);
+        if (state.raw.length) renderActiveTab();
       }
 
-      fetch('./drop.json', { cache: 'no-store' })
-        .then(function(r) {
-          if (!r.ok) throw new Error('drop.json の取得に失敗しました (HTTP ' + r.status + ')');
-          return r.json();
-        })
-        .then(function(j) {
-          if (!Array.isArray(j)) throw new Error('drop.json の形式が配列ではありません');
+      $('bl').addEventListener('click', () => setTheme('light'));
+      $('bd').addEventListener('click', () => setTheme('dark'));
 
-          raw = j;
-          initF();
-          bindEv();
-          apply();
+      (() => {
+        const saved = localStorage.getItem('drops-theme');
+        if (saved === 'light' || saved === 'dark') setTheme(saved);
+      })();
 
-          st.className = 'st ok';
-          st.textContent = '✅ ' + raw.length + ' レコード / ' + uc(raw) + ' 投稿';
-        })
-        .catch(function(e) {
+      async function loadData() {
+        const statusEl = $('ls');
+        if (typeof window.COLOR_CONFIG === 'undefined') {
+          statusEl.className = 'st er';
+          statusEl.textContent = '❌ config.js の読み込みに失敗しています';
+          return;
+        }
+
+        try {
+          const res = await fetch('./drop.json', { cache: 'no-store' });
+          if (!res.ok) throw new Error(`データの取得に失敗しました (HTTP ${res.status})`);
+          
+          const json = await res.json();
+          if (!Array.isArray(json)) throw new Error('データ形式が正しくありません (Array想定)');
+
+          state.raw = json;
+          initFilters();
+          bindEvents();
+          applyFilters();
+
+          statusEl.className = 'st ok';
+          statusEl.textContent = `✅ ${state.raw.length} レコード / ${getUniquePostCount(state.raw)} 投稿`;
+        } catch (e) {
           console.error(e);
-          raw = [];
-          flt = [];
-          uniq = [];
-          st.className = 'st er';
-          st.textContent = '❌ ' + e.message;
-          renderAll();
+          statusEl.className = 'st er';
+          statusEl.textContent = `❌ ${e.message}`;
+          renderActiveTab();
+        }
+      }
+
+      function populateSelect(id, options) {
+        const select = $(id);
+        const currentVal = select.value;
+        while (select.options.length > 1) select.remove(1);
+        options.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v;
+          opt.text = v;
+          select.add(opt);
         });
-    }
+        select.value = currentVal || '';
+      }
 
-    function popSel(id, opts) {
-      var s = E(id);
-      var cur = s.value;
-      while (s.options.length > 1) s.remove(1);
-      opts.forEach(function(v) {
-        var o = document.createElement('option');
-        o.value = v;
-        o.text = v;
-        s.add(o);
-      });
-      s.value = cur || '';
-    }
+      function initFilters() {
+        const getUniqValues = key => [...new Set(state.raw.map(d => d[key]).filter(v => v !== undefined && v !== null && v !== ''))].sort();
+        
+        populateSelect('fT', getUniqValues('tenant'));
+        populateSelect('fG', getUniqValues('gender'));
+        populateSelect('fA', getUniqValues('age_group'));
+        populateSelect('fAG', getUniqValues('nearest_AreaGroup'));
+        populateSelect('fAR', getUniqValues('nearest_Area'));
+        populateSelect('fC', getUniqValues('category'));
+      }
 
-    function initF() {
-      var uniqVals = function(key) {
-        var m = {};
-        raw.forEach(function(d) {
-          var v = d[key];
-          if (v !== undefined && v !== null && v !== '') m[v] = 1;
+      function bindEvents() {
+        ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).addEventListener('change', applyFilters));
+        ['fDF', 'fDT'].forEach(id => {
+          $(id).addEventListener('change', applyFilters);
+          $(id).addEventListener('input', applyFilters);
         });
-        return Object.keys(m).sort();
-      };
 
-      popSel('fT', uniqVals('tenant'));
-      popSel('fG', uniqVals('gender'));
-      popSel('fA', uniqVals('age_group'));
-      popSel('fAG', uniqVals('nearest_AreaGroup'));
-      popSel('fAR', uniqVals('nearest_Area'));
-      popSel('fC', uniqVals('category'));
-    }
+        $('rb').addEventListener('click', () => {
+          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).value = '');
+          $('fDF').value = '';
+          $('fDT').value = '';
+          applyFilters();
+        });
 
-    var bound = false;
-    function bindEv() {
-      if (bound) return;
-      bound = true;
+        $('mp').addEventListener('input', function() {
+          $('mpv').textContent = this.value;
+          if (state.activeTab === 'ar') renderAreaAnalysis();
+        });
 
-      ['fT','fG','fA','fAG','fAR','fC'].forEach(function(id) {
-        E(id).addEventListener('change', apply);
-      });
+        $('mcl').addEventListener('click', closeModal);
+        $('mov').addEventListener('click', e => { if (e.target === $('mov')) closeModal(); });
 
-      ['fDF','fDT'].forEach(function(id) {
-        E(id).addEventListener('change', apply);
-        E(id).addEventListener('input', apply);
-      });
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+            document.querySelectorAll('.tc').forEach(x => x.classList.remove('on'));
+            
+            this.classList.add('on');
+            state.activeTab = this.dataset.t;
+            $(`t-${state.activeTab}`).classList.add('on');
 
-      E('rb').addEventListener('click', reset);
+            renderActiveTab();
+          });
+        });
 
-      E('mp').addEventListener('input', function() {
-        E('mpv').textContent = this.value;
-        rArea();
-      });
+        document.querySelectorAll('#rtg button').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#rtg button').forEach(x => x.classList.remove('on'));
+            this.classList.add('on');
+            state.currentRanks = this.dataset.r === 'all' ? ['top1', 'top2', 'top3'] : [this.dataset.r];
+            renderDistributionChart();
+          });
+        });
 
-      E('mcl').addEventListener('click', closeM);
-      E('mov').addEventListener('click', function(e) {
-        if (e.target === E('mov')) closeM();
-      });
-
-      document.querySelectorAll('.tab').forEach(function(t) {
-        t.addEventListener('click', function() {
-          document.querySelectorAll('.tab').forEach(function(x) { x.classList.remove('on'); });
-          document.querySelectorAll('.tc').forEach(function(x) { x.classList.remove('on'); });
-          this.classList.add('on');
-          E('t-' + this.dataset.t).classList.add('on');
-
-          if (this.dataset.t === 'ma') {
-            setTimeout(function() {
-              if (lmap) lmap.invalidateSize();
-              rMap();
-            }, 120);
-          }
-          if (this.dataset.t === 'nw') {
-            setTimeout(rNet, 80);
+        window.addEventListener('resize', () => {
+          if (state.activeTab === 'nw') renderNetwork();
+          if (state.activeTab === 'ma' && state.map) {
+            setTimeout(() => state.map.invalidateSize(), 150);
           }
         });
-      });
+      }
 
-      document.querySelectorAll('#rtg button').forEach(function(b) {
-        b.addEventListener('click', function() {
-          document.querySelectorAll('#rtg button').forEach(function(x) { x.classList.remove('on'); });
-          this.classList.add('on');
-          cRanks = [this.dataset.r];
-          rC1();
-        });
-      });
+      function applyFilters() {
+        const filters = {
+          tenant: $('fT').value,
+          gender: $('fG').value,
+          age: $('fA').value,
+          areaGroup: $('fAG').value,
+          area: $('fAR').value,
+          category: $('fC').value,
+          dateFrom: $('fDF').value,
+          dateTo: $('fDT').value
+        };
 
-      window.addEventListener('resize', function() {
-        if (E('t-nw').classList.contains('on')) rNet();
-        if (E('t-ma').classList.contains('on') && lmap) {
-          setTimeout(function() { lmap.invalidateSize(); }, 150);
-        }
-      });
-    }
+        state.filteredRecs = state.raw.filter(d => {
+          if (filters.tenant && d.tenant !== filters.tenant) return false;
+          if (filters.gender && d.gender !== filters.gender) return false;
+          if (filters.age && d.age_group !== filters.age) return false;
+          if (filters.areaGroup && d.nearest_AreaGroup !== filters.areaGroup) return false;
+          if (filters.area && d.nearest_Area !== filters.area) return false;
+          if (filters.category && d.category !== filters.category) return false;
 
-    function apply() {
-      var v = {
-        t: E('fT').value,
-        g: E('fG').value,
-        a: E('fA').value,
-        ag: E('fAG').value,
-        ar: E('fAR').value,
-        c: E('fC').value,
-        df: E('fDF').value,
-        dt: E('fDT').value
-      };
-
-      flt = raw.filter(function(d) {
-        if (v.t && d.tenant !== v.t) return false;
-        if (v.g && d.gender !== v.g) return false;
-        if (v.a && d.age_group !== v.a) return false;
-        if (v.ag && d.nearest_AreaGroup !== v.ag) return false;
-        if (v.ar && d.nearest_Area !== v.ar) return false;
-        if (v.c && d.category !== v.c) return false;
-
-        if (v.df || v.dt) {
-          var pd = pD(d.post_dated_at);
-          if (pd && !isNaN(pd.valueOf())) {
-            if (v.df && pd < new Date(v.df)) return false;
-            if (v.dt) {
-              var ed = new Date(v.dt);
-              ed.setDate(ed.getDate() + 1);
-              if (pd >= ed) return false;
-            }
-          }
-        }
-        return true;
-      });
-
-      var seen = {};
-      uniq = [];
-      flt.forEach(function(d) {
-        if (!seen[d.artwork_id]) {
-          seen[d.artwork_id] = 1;
-          uniq.push(d);
-        }
-      });
-
-      E('pc').textContent = uc(raw) + ' 投稿';
-      E('fc').textContent = uniq.length + ' 表示中';
-      renderAll();
-    }
-
-    function reset() {
-      ['fT','fG','fA','fAG','fAR','fC'].forEach(function(id) {
-        E(id).value = '';
-      });
-      E('fDF').value = '';
-      E('fDT').value = '';
-      apply();
-    }
-
-    function renderAll() {
-      rSt();
-      rC1();
-      rC2();
-      rTags();
-      rArea();
-      rAnom();
-      rPosts();
-      rMap();
-      rNet();
-    }
-
-    function rSt() {
-      var t1 = flt.filter(function(d) { return d.rank === 'top1'; });
-      var sc = t1.map(function(d) { return Number(d.score); }).filter(function(s) { return !isNaN(s); });
-      var avg = sc.length ? Math.round(sc.reduce(function(a,b){return a+b;},0) / sc.length * 10) / 10 : '-';
-
-      var ar = {};
-      flt.forEach(function(d) {
-        var a = d.nearest_AreaGroup || d.nearest_Area;
-        if (a) ar[a] = 1;
-      });
-
-      E('scs').innerHTML =
-        '<div class="sc wb"><div class="v">' + uniq.length + '</div><div class="l">投稿数</div></div>' +
-        '<div class="sc wb"><div class="v">' + avg + '</div><div class="l">Top1 平均スコア</div></div>' +
-        '<div class="sc ar"><div class="v">' + Object.keys(ar).length + '</div><div class="l">対象エリア数</div></div>';
-    }
-
-    function rC1() {
-      var C = GC();
-      var tc = CV('--tick');
-      var gc = CV('--grid');
-      var rk = cRanks[0] === 'all' ? ['top1','top2','top3'] : cRanks;
-
-      var rd = flt.filter(function(d) {
-        return rk.indexOf(d.rank) >= 0 && d.category;
-      });
-
-      var cm = {};
-      rd.forEach(function(d) {
-        if (!cm[d.category]) cm[d.category] = { c:0, t:0, n:0 };
-        cm[d.category].c++;
-        var s = Number(d.score);
-        if (!isNaN(s)) {
-          cm[d.category].t += s;
-          cm[d.category].n++;
-        }
-      });
-
-      var lb = Object.keys(cm).sort(function(a,b){ return cm[b].c - cm[a].c; });
-
-      if (ch1) ch1.destroy();
-      ch1 = new Chart(E('c1').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: lb,
-          datasets: [{
-            label: '投稿数',
-            data: lb.map(function(l){ return cm[l].c; }),
-            backgroundColor: lb.map(function(_,i){ return C.wb[i % C.wb.length]; }),
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                afterLabel: function(ctx) {
-                  var m = cm[lb[ctx.dataIndex]];
-                  return '平均: ' + (m.n ? Math.round(m.t / m.n * 10) / 10 : '-');
-                }
+          if (filters.dateFrom || filters.dateTo) {
+            const pd = parseCustomDate(d.post_dated_at);
+            if (pd && !isNaN(pd.valueOf())) {
+              if (filters.dateFrom && pd < new Date(filters.dateFrom)) return false;
+              if (filters.dateTo) {
+                const limitDate = new Date(filters.dateTo);
+                limitDate.setDate(limitDate.getDate() + 1);
+                if (pd >= limitDate) return false;
               }
             }
+          }
+          return true;
+        });
+
+        const seenIds = new Set();
+        state.uniquePosts = [];
+        state.filteredRecs.forEach(d => {
+          if (!seenIds.has(d.artwork_id)) {
+            seenIds.add(d.artwork_id);
+            state.uniquePosts.push(d);
+          }
+        });
+
+        $('pc').textContent = `${getUniquePostCount(state.raw)} 投稿`;
+        $('fc').textContent = `${state.uniquePosts.length} 表示中`;
+        
+        renderActiveTab();
+      }
+
+      // 表示されているタブのみに限定してレンダリングを実行（パフォーマンス向上）
+      function renderActiveTab() {
+        switch(state.activeTab) {
+          case 'ov':
+            renderSummary();
+            renderDistributionChart();
+            renderAverageScoreChart();
+            renderKeywords();
+            break;
+          case 'ar':
+            renderAreaAnalysis();
+            break;
+          case 'an':
+            renderAnomalyDetection();
+            break;
+          case 'po':
+            renderPostList();
+            break;
+          case 'ma':
+            setTimeout(renderMap, 80);
+            break;
+          case 'nw':
+            setTimeout(renderNetwork, 80);
+            break;
+        }
+      }
+
+      function renderSummary() {
+        const top1Recs = state.filteredRecs.filter(d => d.rank === 'top1');
+        const scores = top1Recs.map(d => Number(d.score)).filter(s => !isNaN(s));
+        const avg = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : '-';
+        const uniqueAreas = new Set(state.filteredRecs.map(d => d.nearest_AreaGroup || d.nearest_Area).filter(Boolean));
+
+        $('scs').innerHTML = `
+          <div class="sc wb"><div class="v">${state.uniquePosts.length}</div><div class="l">投稿数</div></div>
+          <div class="sc wb"><div class="v">${avg}</div><div class="l">Top1 平均スコア</div></div>
+          <div class="sc ar"><div class="v">${uniqueAreas.size}</div><div class="l">対象エリア数</div></div>
+        `;
+      }
+
+      function renderDistributionChart() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
+
+        const targetData = state.filteredRecs.filter(d => state.currentRanks.includes(d.rank) && d.category);
+        const categoryStats = {};
+
+        targetData.forEach(d => {
+          if (!categoryStats[d.category]) categoryStats[d.category] = { count: 0, totalScore: 0, validScoreCount: 0 };
+          categoryStats[d.category].count++;
+          const score = Number(d.score);
+          if (!isNaN(score)) {
+            categoryStats[d.category].totalScore += score;
+            categoryStats[d.category].validScoreCount++;
+          }
+        });
+
+        const labels = Object.keys(categoryStats).sort((a, b) => categoryStats[b].count - categoryStats[a].count);
+
+        if (state.charts.ch1) state.charts.ch1.destroy();
+        state.charts.ch1 = new Chart($('c1').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '投稿数',
+              data: labels.map(l => categoryStats[l].count),
+              backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
+              borderRadius: 6
+            }]
           },
-          scales: {
-            x: { ticks:{ color: tc }, grid:{ display:false } },
-            y: { ticks:{ color: tc }, grid:{ color: gc } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  afterLabel: ctx => {
+                    const stats = categoryStats[labels[ctx.dataIndex]];
+                    return `平均: ${stats.validScoreCount ? Math.round((stats.totalScore / stats.validScoreCount) * 10) / 10 : '-'}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+            }
           }
-        }
-      });
-    }
+        });
+      }
 
-    function rC2() {
-      var C = GC();
-      var tc = CV('--tick');
-      var gc = CV('--grid');
+      function renderAverageScoreChart() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
 
-      var t1 = flt.filter(function(d){ return d.rank === 'top1' && d.category; });
-      var cm = {};
-      t1.forEach(function(d){
-        if (!cm[d.category]) cm[d.category] = { t:0, n:0 };
-        var s = Number(d.score);
-        if (!isNaN(s)) {
-          cm[d.category].t += s;
-          cm[d.category].n++;
-        }
-      });
+        const top1Recs = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const categoryStats = {};
 
-      var lb = Object.keys(cm).sort();
-      var av = lb.map(function(l){ return cm[l].n ? Math.round(cm[l].t / cm[l].n * 10) / 10 : 0; });
-
-      if (ch2) ch2.destroy();
-      ch2 = new Chart(E('c2').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: lb,
-          datasets: [{
-            label: '平均スコア',
-            data: av,
-            backgroundColor: lb.map(function(_,i){ return C.wb[i % C.wb.length]; }),
-            borderRadius: 6
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { min:0, max:100, ticks:{ color: tc }, grid:{ color: gc } },
-            y: { ticks:{ color: tc }, grid:{ display:false } }
+        top1Recs.forEach(d => {
+          if (!categoryStats[d.category]) categoryStats[d.category] = { total: 0, count: 0 };
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            categoryStats[d.category].total += s;
+            categoryStats[d.category].count++;
           }
-        }
-      });
-    }
-
-    function rTags() {
-      var t1 = flt.filter(function(d){ return d.rank === 'top1' && d.category && d.reason; });
-      var cr = {};
-
-      t1.forEach(function(d){
-        if (!cr[d.category]) cr[d.category] = {};
-        d.reason.split(/[,、，]/).forEach(function(r){
-          r = r.trim();
-          if (r) cr[d.category][r] = (cr[d.category][r] || 0) + 1;
         });
-      });
 
-      var h = '';
-      Object.keys(cr).sort().forEach(function(cat){
-        h += '<div style="margin-bottom:14px"><strong class="tw" data-tip="' + (window.CATEGORY_DESCRIPTIONS[cat] || '') + '">' + cat + '</strong><br>';
-        Object.entries(cr[cat]).sort(function(a,b){ return b[1] - a[1]; }).forEach(function(e){
-          h += '<span class="tag' + (e[1] > 1 ? ' hl' : '') + '">' + e[0] + (e[1] > 1 ? ' (' + e[1] + ')' : '') + '</span>';
+        const labels = Object.keys(categoryStats).sort();
+        const averages = labels.map(l => categoryStats[l].count ? Math.round((categoryStats[l].total / categoryStats[l].count) * 10) / 10 : 0);
+
+        if (state.charts.ch2) state.charts.ch2.destroy();
+        state.charts.ch2 = new Chart($('c2').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '平均スコア',
+              data: averages,
+              backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
+              borderRadius: 6
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
+              y: { ticks: { color: tickColor }, grid: { display: false } }
+            }
+          }
         });
-        h += '</div>';
-      });
+      }
 
-      E('rts').innerHTML = h || '<span class="tag">該当データなし</span>';
-    }
+      function renderKeywords() {
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category && d.reason);
+        const categoryKeywords = {};
 
-    function rArea() {
-      var C = GC();
-      var tc = CV('--tick');
-      var gc = CV('--grid');
-      var mp = parseInt(E('mp').value, 10) || 1;
+        top1Data.forEach(d => {
+          if (!categoryKeywords[d.category]) categoryKeywords[d.category] = {};
+          d.reason.split(/[,、，]/).forEach(r => {
+            const trimmed = r.trim();
+            if (trimmed) {
+              categoryKeywords[d.category][trimmed] = (categoryKeywords[d.category][trimmed] || 0) + 1;
+            }
+          });
+        });
 
-      var t1 = flt.filter(function(d){ return d.rank === 'top1' && d.category; });
-      var ad = {};
+        let htmlString = '';
+        Object.keys(categoryKeywords).sort().forEach(cat => {
+          htmlString += `<div style="margin-bottom:14px"><strong class="tw" data-tip="${window.CATEGORY_DESCRIPTIONS[cat] || ''}">${cat}</strong><br>`;
+          Object.entries(categoryKeywords[cat])
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([word, count]) => {
+              htmlString += `<span class="tag ${count > 1 ? 'hl' : ''}">${word}${count > 1 ? ` (${count})` : ''}</span>`;
+            });
+          htmlString += '</div>';
+        });
 
-      t1.forEach(function(d){
-        var a = d.nearest_AreaGroup || d.nearest_Area || '不明';
-        if (!ad[a]) ad[a] = { ids:{}, cats:{} };
-        ad[a].ids[d.artwork_id] = 1;
-        if (!ad[a].cats[d.category]) ad[a].cats[d.category] = { t:0, n:0 };
-        var s = Number(d.score);
-        if (!isNaN(s)) {
-          ad[a].cats[d.category].t += s;
-          ad[a].cats[d.category].n++;
-        }
-      });
+        $('rts').innerHTML = htmlString || '<span class="tag">該当データなし</span>';
+      }
 
-      var areas = Object.keys(ad).filter(function(a){ return Object.keys(ad[a].ids).length >= mp; });
+      function renderAreaAnalysis() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
+        const minPostsThreshold = parseInt($('mp').value, 10) || 1;
 
-      var catMap = {};
-      t1.forEach(function(d){ catMap[d.category] = 1; });
-      var cats = Object.keys(catMap).sort();
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const areaData = {};
 
-      if (ch3) ch3.destroy();
-      ch3 = new Chart(E('c3').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: cats,
-          datasets: areas.map(function(a, i){
-            return {
-              label: a + ' (' + Object.keys(ad[a].ids).length + '件)',
-              data: cats.map(function(c){
-                var x = ad[a].cats[c];
-                return x && x.n ? Math.round(x.t / x.n * 10) / 10 : 0;
+        top1Data.forEach(d => {
+          const areaName = d.nearest_AreaGroup || d.nearest_Area || '不明';
+          if (!areaData[areaName]) areaData[areaName] = { postIds: new Set(), categories: {} };
+          areaData[areaName].postIds.add(d.artwork_id);
+          
+          if (!areaData[areaName].categories[d.category]) {
+            areaData[areaName].categories[d.category] = { total: 0, count: 0 };
+          }
+          const score = Number(d.score);
+          if (!isNaN(score)) {
+            areaData[areaName].categories[d.category].total += score;
+            areaData[areaName].categories[d.category].count++;
+          }
+        });
+
+        const sortedValidAreas = Object.keys(areaData)
+          .filter(a => areaData[a].postIds.size >= minPostsThreshold)
+          .sort((a, b) => areaData[b].postIds.size - areaData[a].postIds.size);
+
+        const availableCategories = [...new Set(top1Data.map(d => d.category))].sort();
+
+        if (state.charts.ch3) state.charts.ch3.destroy();
+        state.charts.ch3 = new Chart($('c3').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: availableCategories,
+            datasets: sortedValidAreas.map((area, idx) => ({
+              label: `${area} (${areaData[area].postIds.size}件)`,
+              data: availableCategories.map(c => {
+                const stats = areaData[area].categories[c];
+                return stats && stats.count ? Math.round((stats.total / stats.count) * 10) / 10 : 0;
               }),
-              backgroundColor: C.area[i % C.area.length],
+              backgroundColor: config.area[idx % config.area.length],
               borderRadius: 5
+            }))
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: tickColor, font: { size: 11 } } } },
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } }
+            }
+          }
+        });
+
+        if (state.charts.ch4) state.charts.ch4.destroy();
+        state.charts.ch4 = new Chart($('c4').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: sortedValidAreas,
+            datasets: [{
+              label: '投稿数',
+              data: sortedValidAreas.map(a => areaData[a].postIds.size),
+              backgroundColor: sortedValidAreas.map((_, idx) => config.area[idx % config.area.length]),
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+            }
+          }
+        });
+      }
+
+      function renderAnomalyDetection() {
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const globalCategoryStats = {};
+
+        top1Data.forEach(d => {
+          if (!globalCategoryStats[d.category]) globalCategoryStats[d.category] = { total: 0, count: 0 };
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            globalCategoryStats[d.category].total += s;
+            globalCategoryStats[d.category].count++;
+          }
+        });
+
+        const globalAverages = {};
+        Object.keys(globalCategoryStats).forEach(c => {
+          globalAverages[c] = globalCategoryStats[c].count ? globalCategoryStats[c].total / globalCategoryStats[c].count : 0;
+        });
+
+        const areaCategoryPairStats = {};
+        top1Data.forEach(d => {
+          const area = d.nearest_AreaGroup || d.nearest_Area || '不明';
+          const complexKey = `${area}|||${d.category}`;
+          if (!areaCategoryPairStats[complexKey]) {
+            areaCategoryPairStats[complexKey] = { area, category: d.category, total: 0, count: 0, postIds: [] };
+          }
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            areaCategoryPairStats[complexKey].total += s;
+            areaCategoryPairStats[complexKey].count++;
+          }
+          areaCategoryPairStats[complexKey].postIds.push(d.artwork_id);
+        });
+
+        const anomalyList = Object.values(areaCategoryPairStats)
+          .filter(a => a.count >= 1)
+          .map(a => {
+            const areaAvg = a.total / a.count;
+            const deviation = areaAvg - globalAverages[a.category];
+            return {
+              area: a.area,
+              category: a.category,
+              areaAvg: Math.round(areaAvg * 10) / 10,
+              globalAvg: Math.round(globalAverages[a.category] * 10) / 10,
+              diff: Math.round(deviation * 10) / 10,
+              count: a.count,
+              postIds: a.postIds
             };
           })
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: { color: tc, font:{ size:11 } }
-            }
-          },
-          scales: {
-            x: { ticks:{ color: tc }, grid:{ display:false } },
-            y: { min:0, max:100, ticks:{ color: tc }, grid:{ color: gc } }
-          }
-        }
-      });
+          .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
 
-      if (ch4) ch4.destroy();
-      var lb = areas.sort(function(a,b){ return Object.keys(ad[b].ids).length - Object.keys(ad[a].ids).length; });
+        const tbody = document.querySelector('#atb tbody');
+        tbody.innerHTML = '';
 
-      ch4 = new Chart(E('c4').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: lb,
-          datasets: [{
-            label: '投稿数',
-            data: lb.map(function(a){ return Object.keys(ad[a].ids).length; }),
-            backgroundColor: lb.map(function(_,i){ return C.area[i % C.area.length]; }),
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks:{ color: tc }, grid:{ display:false } },
-            y: { ticks:{ color: tc }, grid:{ color: gc } }
-          }
-        }
-      });
-    }
-
-    function rAnom() {
-      var t1 = flt.filter(function(d){ return d.rank === 'top1' && d.category; });
-      var gC = {};
-
-      t1.forEach(function(d){
-        if (!gC[d.category]) gC[d.category] = { t:0, n:0 };
-        var s = Number(d.score);
-        if (!isNaN(s)) {
-          gC[d.category].t += s;
-          gC[d.category].n++;
-        }
-      });
-
-      var gA = {};
-      Object.keys(gC).forEach(function(c){
-        gA[c] = gC[c].n ? gC[c].t / gC[c].n : 0;
-      });
-
-      var ac = {};
-      t1.forEach(function(d){
-        var a = d.nearest_AreaGroup || d.nearest_Area || '不明';
-        var k = a + '|||' + d.category;
-        if (!ac[k]) ac[k] = { area:a, cat:d.category, t:0, n:0, ids:[] };
-        var s = Number(d.score);
-        if (!isNaN(s)) {
-          ac[k].t += s;
-          ac[k].n++;
-        }
-        ac[k].ids.push(d.artwork_id);
-      });
-
-      var an = Object.values(ac)
-        .filter(function(a){ return a.n >= 1; })
-        .map(function(a){
-          var av = a.t / a.n;
-          var df = av - gA[a.cat];
-          return {
-            area: a.area,
-            cat: a.cat,
-            avg: Math.round(av * 10) / 10,
-            gAvg: Math.round(gA[a.cat] * 10) / 10,
-            diff: Math.round(df * 10) / 10,
-            n: a.n,
-            ids: a.ids
-          };
-        })
-        .sort(function(a,b){ return Math.abs(b.diff) - Math.abs(a.diff); });
-
-      var tb = document.querySelector('#atb tbody');
-      tb.innerHTML = '';
-
-      an.slice(0, 40).forEach(function(a){
-        var tr = document.createElement('tr');
-        var cl = a.diff > 0 ? 'ah' : 'al';
-        tr.innerHTML =
-          '<td>' + a.area + '</td>' +
-          '<td>' + a.cat + '</td>' +
-          '<td>' + a.avg + '</td>' +
-          '<td>' + a.gAvg + '</td>' +
-          '<td class="' + cl + '">' + (a.diff > 0 ? '+' : '') + a.diff + '</td>' +
-          '<td>' + a.n + '</td>';
-        tr.addEventListener('click', function(){ showAP(a); });
-        tb.appendChild(tr);
-      });
-    }
-
-    function mkPI(p) {
-      var d = document.createElement('div');
-      d.className = 'pi';
-
-      var sv = (p.score !== '' && p.score !== undefined) ? p.score : '-';
-
-      d.innerHTML =
-        '<img src="' + (p.image_file_path_thumbnail || '') + '" alt="" onerror="this.style.display=\\'none\\'">' +
-        '<div class="info">' +
-          '<div class="sen">' + (p.sentence || '') + '</div>' +
-          '<div class="meta">' +
-            '<span>📍 ' + (p.nearest_Area || '') + '</span>' +
-            '<span>👤 ' + (p.gender || '') + ' ' + (p.age_group || '') + '</span>' +
-            '<span>🏷️ ' + (p.category || '') + ': ' + sv + '</span>' +
-          '</div>' +
-        '</div>';
-
-      d.addEventListener('click', function(){ openM(p.artwork_id); });
-      return d;
-    }
-
-    function showAP(a) {
-      E('ap').classList.remove('hid');
-      E('apl').innerHTML = '';
-
-      var ids = {};
-      a.ids.forEach(function(id){ ids[id] = 1; });
-
-      flt
-        .filter(function(d){ return ids[d.artwork_id] && d.rank === 'top1'; })
-        .forEach(function(p){ E('apl').appendChild(mkPI(p)); });
-
-      E('ap').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function rPosts() {
-      E('pls').innerHTML = '';
-      var sh = uniq.slice(0, 100);
-      E('ps').textContent = '(' + sh.length + '/' + uniq.length + '件)';
-
-      sh.forEach(function(p){
-        var x = flt.find(function(d){ return d.artwork_id === p.artwork_id && d.rank === 'top1'; }) || p;
-        E('pls').appendChild(mkPI(x));
-      });
-    }
-
-    function openM(aid) {
-      var recs = flt.filter(function(d){ return d.artwork_id === aid; });
-      if (!recs.length) return;
-
-      var p = recs[0];
-      var rk = recs.slice().sort(function(a,b){
-        var o = { top1:1, top2:2, top3:3 };
-        return (o[a.rank] || 9) - (o[b.rank] || 9);
-      });
-
-      var h = '<h2>📝 投稿詳細</h2>';
-
-      if (p.image_file_path_thumbnail) {
-        h += '<img src="' + p.image_file_path_thumbnail + '" alt="" onerror="this.style.display=\\'none\\'">';
+        anomalyList.slice(0, 40).forEach(anom => {
+          const tr = document.createElement('tr');
+          const className = anom.diff > 0 ? 'ah' : 'al';
+          tr.innerHTML = `
+            <td>${anom.area}</td>
+            <td>${anom.category}</td>
+            <td>${anom.areaAvg}</td>
+            <td>${anom.globalAvg}</td>
+            <td class="${className}">${anom.diff > 0 ? '+' : ''}${anom.diff}</td>
+            <td>${anom.count}</td>
+          `;
+          tr.addEventListener('click', () => showAnomalySpecificPosts(anom));
+          tbody.appendChild(tr);
+        });
       }
 
-      h += '<p style="margin-bottom:12px;line-height:1.65">' + (p.sentence || '') + '</p>';
-      h += '<table>' +
-        '<tr><th>性別</th><td>' + (p.gender || '-') + '</td></tr>' +
-        '<tr><th>年代</th><td>' + (p.age_group || '-') + ' (' + (p.age_group_half || '-') + ')</td></tr>' +
-        '<tr><th>投稿日時</th><td>' + (p.post_dated_at || '-') + '</td></tr>' +
-        '<tr><th>エリア</th><td>' + (p.nearest_AreaGroup || '') + ' / ' + (p.nearest_Area || '') + '</td></tr>' +
-        '<tr><th>座標</th><td>' + (p.latitude || '-') + ', ' + (p.longitude || '-') + '</td></tr>' +
-      '</table>';
+      function createPostListItemElement(post) {
+        const item = document.createElement('div');
+        item.className = 'pi';
+        const displayScore = (post.score !== '' && post.score !== undefined) ? post.score : '-';
 
-      h += '<h3 style="margin:16px 0 8px;font-size:.9rem">WB指標 Top1〜3</h3>';
-      h += '<table><tr><th>順位</th><th>指標</th><th>スコア</th><th>根拠</th></tr>';
-
-      rk.forEach(function(r){
-        var sv = (r.score !== '' && r.score !== undefined) ? r.score : '-';
-        var pct = sv !== '-' ? sv : 0;
-
-        h += '<tr>' +
-          '<td>' + (r.rank || '-') + '</td>' +
-          '<td><span class="tw" data-tip="' + (window.CATEGORY_DESCRIPTIONS[r.category] || '') + '">' + (r.category || '-') + '</span></td>' +
-          '<td>' +
-            '<div style="display:flex;align-items:center;gap:8px">' +
-              sv +
-              '<div class="sb" style="width:80px">' +
-                '<div class="f" style="width:' + pct + '%;background:' + (pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--warn)' : 'var(--danger)') + '"></div>' +
-              '</div>' +
-            '</div>' +
-          '</td>' +
-          '<td>' + (r.reason || '')
-            .split(/[,、，]/)
-            .map(function(t){ return t.trim(); })
-            .filter(Boolean)
-            .map(function(t){ return '<span class="tag">' + t + '</span>'; })
-            .join('') + '</td>' +
-        '</tr>';
-      });
-
-      h += '</table>';
-
-      E('mbd').innerHTML = h;
-      E('mov').classList.add('show');
-    }
-
-    function closeM() {
-      E('mov').classList.remove('show');
-    }
-
-    function dC(pts) {
-      if (!pts.length) return null;
-      var gs = 0.005;
-      var g = {};
-
-      pts.forEach(function(ll){
-        var k = Math.round(ll[0] / gs) + '_' + Math.round(ll[1] / gs);
-        if (!g[k]) g[k] = { la:0, ln:0, c:0 };
-        g[k].la += ll[0];
-        g[k].ln += ll[1];
-        g[k].c++;
-      });
-
-      var b = null;
-      Object.values(g).forEach(function(c){
-        if (!b || c.c > b.c) b = c;
-      });
-
-      return b ? [b.la / b.c, b.ln / b.c, b.c] : null;
-    }
-
-    function rMap() {
-      if (!lmap) {
-        lmap = L.map('map', { zoomControl: true });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap'
-        }).addTo(lmap);
-        mgrp = L.layerGroup().addTo(lmap);
+        item.innerHTML = `
+          <img src="${post.image_file_path_thumbnail || ''}" alt="" onerror="this.style.display='none'">
+          <div class="info">
+            <div class="sen">${post.sentence || ''}</div>
+            <div class="meta">
+              <span>📍 ${post.nearest_Area || ''}</span>
+              <span>👤 ${post.gender || ''} ${post.age_group || ''}</span>
+              <span>🏷️ ${post.category || ''}: ${displayScore}</span>
+            </div>
+          </div>
+        `;
+        item.addEventListener('click', () => openModal(post.artwork_id));
+        return item;
       }
 
-      mgrp.clearLayers();
-      var pts = [];
+      function showAnomalySpecificPosts(anom) {
+        $('ap').classList.remove('hid');
+        const container = $('apl');
+        container.innerHTML = '';
 
-      uniq.forEach(function(p){
-        if (p.latitude == null || p.longitude == null || p.latitude === '' || p.longitude === '') return;
-        var la = Number(p.latitude);
-        var ln = Number(p.longitude);
-        if (isNaN(la) || isNaN(ln)) return;
+        const idSet = new Set(anom.postIds);
+        state.filteredRecs
+          .filter(d => idSet.has(d.artwork_id) && d.rank === 'top1')
+          .forEach(p => container.appendChild(createPostListItemElement(p)));
 
-        pts.push([la, ln]);
+        $('ap').scrollIntoView({ behavior: 'smooth' });
+      }
 
-        var t1 = flt.find(function(d){
-          return d.artwork_id === p.artwork_id && d.rank === 'top1';
-        }) || p;
+      function renderPostList() {
+        const container = $('pls');
+        container.innerHTML = '';
+        const displayLimit = state.uniquePosts.slice(0, 100);
+        $('ps').textContent = `(${displayLimit.length}/${state.uniquePosts.length}件)`;
 
-        var m = L.circleMarker([la, ln], {
-          radius: 8,
-          fillColor: CV('--blue'),
-          color: '#fff',
-          weight: 2,
-          fillOpacity: 0.85
+        displayLimit.forEach(p => {
+          const top1Post = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
+          container.appendChild(createPostListItemElement(top1Post));
+        });
+      }
+
+      function calculateDensityCenter(coords) {
+        if (!coords.length) return null;
+        const grid = {};
+
+        coords.forEach(([lat, lng]) => {
+          const key = `${Math.round(lat / CONSTANTS.GRID_SPACING)}_${Math.round(lng / CONSTANTS.GRID_SPACING)}`;
+          if (!grid[key]) grid[key] = { latSum: 0, lngSum: 0, count: 0 };
+          grid[key].latSum += lat;
+          grid[key].lngSum += lng;
+          grid[key].count++;
         });
 
-        m.bindPopup(
-          '<div style="max-width:260px;font-size:.8rem">' +
-          '<b>' + (t1.category || '') + '</b> (' + (t1.score || '-') + ')<br>' +
-          (p.sentence || '').slice(0, 100) + '…' +
-          '</div>'
-        );
+        let densestGrid = null;
+        Object.values(grid).forEach(g => {
+          if (!densestGrid || g.count > densestGrid.count) densestGrid = g;
+        });
 
-        m.on('click', function(){ openM(p.artwork_id); });
-        mgrp.addLayer(m);
-      });
+        return densestGrid ? [densestGrid.latSum / densestGrid.count, densestGrid.lngSum / densestGrid.count, densestGrid.count] : null;
+      }
 
-      setTimeout(function(){ lmap.invalidateSize(); }, 80);
+      function renderMap() {
+        if (!state.map) {
+          state.map = L.map('map', { zoomControl: true });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(state.map);
+          state.mapMarkerGroup = L.layerGroup().addTo(state.map);
+        }
 
-      if (pts.length) {
-        var d = dC(pts);
-        if (d) {
-          var z = d[2] >= 10 ? 15 : d[2] >= 5 ? 14 : 13;
-          lmap.setView([d[0], d[1]], z);
+        state.mapMarkerGroup.clearLayers();
+        const validCoords = [];
+
+        state.uniquePosts.forEach(p => {
+          if (p.latitude == null || p.longitude == null || p.latitude === '' || p.longitude === '') return;
+          const lat = Number(p.latitude);
+          const lng = Number(p.longitude);
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          validCoords.push([lat, lng]);
+
+          const top1Data = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
+
+          const marker = L.circleMarker([lat, lng], {
+            radius: 8,
+            fillColor: getThemeValue('--blue'),
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 0.85
+          });
+
+          marker.bindPopup(`
+            <div style="max-width:260px;font-size:.8rem">
+              <b>${top1Data.category || ''}</b> (${top1Data.score || '-'})<br>
+              ${(p.sentence || '').slice(0, 100)}…
+            </div>
+          `);
+
+          marker.on('click', () => openModal(p.artwork_id));
+          state.mapMarkerGroup.addLayer(marker);
+        });
+
+        setTimeout(() => state.map.invalidateSize(), 80);
+
+        if (validCoords.length) {
+          const center = calculateDensityCenter(validCoords);
+          if (center) {
+            const zoomLevel = center[2] >= 10 ? 15 : center[2] >= 5 ? 14 : 13;
+            state.map.setView([center[0], center[1]], zoomLevel);
+          } else {
+            state.map.fitBounds(validCoords, { padding: [30, 30] });
+          }
         } else {
-          lmap.fitBounds(pts, { padding: [30, 30] });
+          state.map.setView([35.68, 139.76], 11); // 東京駅周辺をデフォルト値に設定
         }
-      } else {
-        lmap.setView([35, 135.5], 7);
       }
-    }
 
-    function rNet() {
-      var C = GC();
-      var svg = d3.select('#network');
-      if (!svg.node()) return;
+      function renderNetwork() {
+        const config = getColorConfig();
+        const svg = d3.select('#network');
+        if (!svg.node()) return;
 
-      svg.selectAll('*').remove();
+        svg.selectAll('*').remove();
 
-      var rect = svg.node().getBoundingClientRect();
-      var w = rect.width || 800;
-      var h = rect.height || Math.max(window.innerHeight - 180, 500);
+        const bounds = svg.node().getBoundingClientRect();
+        const width = bounds.width || 800;
+        const height = bounds.height || Math.max(window.innerHeight - 180, 500);
+        svg.attr('width', width).attr('height', height);
 
-      svg.attr('width', w).attr('height', h);
+        const coOccurrences = {};
+        const keywordCounts = {};
 
-      var co = {};
-      var kc = {};
+        state.filteredRecs.filter(d => d.rank === 'top1' && d.reason).forEach(d => {
+          const keywords = [...new Set(String(d.reason).split(/[,、，]/).map(r => r.trim()).filter(Boolean))];
 
-      flt.filter(function(d){
-        return d.rank === 'top1' && d.reason;
-      }).forEach(function(d){
-        var kws = [];
-        String(d.reason).split(/[,、，]/).forEach(function(r){
-          r = r.trim();
-          if (r && kws.indexOf(r) < 0) kws.push(r);
-        });
+          keywords.forEach(k => { keywordCounts[k] = (keywordCounts[k] || 0) + 1; });
 
-        kws.forEach(function(k){
-          kc[k] = (kc[k] || 0) + 1;
-        });
-
-        for (var i = 0; i < kws.length; i++) {
-          for (var j = i + 1; j < kws.length; j++) {
-            var key = [kws[i], kws[j]].sort().join('|||');
-            co[key] = (co[key] || 0) + 1;
+          for (let i = 0; i < keywords.length; i++) {
+            for (let j = i + 1; j < keywords.length; j++) {
+              const complexKey = [keywords[i], keywords[j]].sort().join('|||');
+              coOccurrences[complexKey] = (coOccurrences[complexKey] || 0) + 1;
+            }
           }
-        }
-      });
+        });
 
-      var topK = Object.entries(kc)
-        .sort(function(a,b){ return b[1] - a[1]; })
-        .slice(0, 40)
-        .map(function(e){ return e[0]; });
+        const topKeywords = Object.entries(keywordCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 40)
+          .map(e => e[0]);
 
-      var ts = {};
-      topK.forEach(function(k){ ts[k] = 1; });
+        const topKeywordsSet = new Set(topKeywords);
+        const nodes = topKeywords.map(k => ({ id: k, count: keywordCounts[k] }));
 
-      var nodes = topK.map(function(k){
-        return { id:k, count:kc[k] };
-      });
+        const links = [];
+        Object.entries(coOccurrences).forEach(([key, val]) => {
+          const [source, target] = key.split('|||');
+          if (topKeywordsSet.has(source) && topKeywordsSet.has(target)) {
+            links.push({ source, target, value: val });
+          }
+        });
 
-      var links = [];
-      Object.entries(co).forEach(function(e){
-        var p = e[0].split('|||');
-        if (ts[p[0]] && ts[p[1]] && e[1] >= 1) {
-          links.push({ source:p[0], target:p[1], value:e[1] });
-        }
-      });
+        if (!nodes.length) return;
 
-      if (!nodes.length) return;
+        const radiusScale = d3.scaleSqrt().domain([1, d3.max(nodes, d => d.count) || 1]).range([5, 24]);
+        const weightScale = d3.scaleLinear().domain([1, d3.max(links, d => d.value) || 1]).range([1, 5]);
+        const strokeColor = getThemeValue('--link-line');
 
-      var rS = d3.scaleSqrt()
-        .domain([1, d3.max(nodes, function(d){ return d.count; }) || 1])
-        .range([5, 24]);
+        const simulation = d3.forceSimulation(nodes)
+          .force('link', d3.forceLink(links).id(d => d.id).distance(CONSTANTS.NETWORK_DISTANCE))
+          .force('charge', d3.forceManyBody().strength(CONSTANTS.NETWORK_STRENGTH))
+          .force('center', d3.forceCenter(width / 2, height / 2))
+          .force('collide', d3.forceCollide().radius(d => radiusScale(d.count) + 10));
 
-      var wS = d3.scaleLinear()
-        .domain([1, d3.max(links, function(d){ return d.value; }) || 1])
-        .range([1, 5]);
+        const linkElements = svg.append('g')
+          .selectAll('line')
+          .data(links)
+          .enter()
+          .append('line')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', d => weightScale(d.value))
+          .attr('stroke-opacity', 0.85);
 
-      var lc = CV('--link-line');
-
-      var sim = d3.forceSimulation(nodes)
-        .force('link', d3.forceLink(links).id(function(d){ return d.id; }).distance(80))
-        .force('charge', d3.forceManyBody().strength(-140))
-        .force('center', d3.forceCenter(w / 2, h / 2))
-        .force('collide', d3.forceCollide().radius(function(d){ return rS(d.count) + 10; }));
-
-      svg.append('g')
-        .selectAll('line')
-        .data(links)
-        .enter()
-        .append('line')
-        .attr('stroke', lc)
-        .attr('stroke-width', function(d){ return wS(d.value); })
-        .attr('stroke-opacity', 0.85);
-
-      var nd = svg.append('g')
-        .selectAll('g')
-        .data(nodes)
-        .enter()
-        .append('g')
-        .call(
-          d3.drag()
-            .on('start', function(e,d){
-              if (!e.active) sim.alphaTarget(0.3).restart();
+        const nodeElements = svg.append('g')
+          .selectAll('g')
+          .data(nodes)
+          .enter()
+          .append('g')
+          .call(d3.drag()
+            .on('start', (e, d) => {
+              if (!e.active) simulation.alphaTarget(0.3).restart();
               d.fx = d.x;
               d.fy = d.y;
             })
-            .on('drag', function(e,d){
+            .on('drag', (e, d) => {
               d.fx = e.x;
               d.fy = e.y;
             })
-            .on('end', function(e,d){
-              if (!e.active) sim.alphaTarget(0);
+            .on('end', (e, d) => {
+              if (!e.active) simulation.alphaTarget(0);
               d.fx = null;
               d.fy = null;
             })
-        );
+          );
 
-      nd.append('circle')
-        .attr('r', function(d){ return rS(d.count); })
-        .attr('fill', function(d,i){ return C.node[i % C.node.length]; })
-        .attr('stroke', C.nodeStroke)
-        .attr('stroke-width', 2.5)
-        .attr('opacity', 0.95);
+        nodeElements.append('circle')
+          .attr('r', d => radiusScale(d.count))
+          .attr('fill', (d, i) => config.node[i % config.node.length])
+          .attr('stroke', config.nodeStroke)
+          .attr('stroke-width', 2.5)
+          .attr('opacity', 0.95);
 
-      nd.append('text')
-        .text(function(d){ return d.id; })
-        .attr('text-anchor', 'middle')
-        .attr('dy', '0.35em')
-        .attr('fill', C.nodeText)
-        .attr('font-size', function(d){ return Math.max(9, Math.min(14, rS(d.count))); })
-        .attr('font-weight', 600)
-        .attr('pointer-events', 'none');
+        nodeElements.append('text')
+          .text(d => d.id)
+          .attr('text-anchor', 'middle')
+          .attr('dy', '0.35em')
+          .attr('fill', config.nodeText)
+          .attr('font-size', d => Math.max(9, Math.min(14, radiusScale(d.count))))
+          .attr('font-weight', 600)
+          .attr('pointer-events', 'none');
 
-      sim.on('tick', function(){
-        svg.selectAll('line')
-          .attr('x1', function(d){ return d.source.x; })
-          .attr('y1', function(d){ return d.source.y; })
-          .attr('x2', function(d){ return d.target.x; })
-          .attr('y2', function(d){ return d.target.y; });
+        simulation.on('tick', () => {
+          linkElements
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
 
-        nd.attr('transform', function(d){
-          return 'translate(' + d.x + ',' + d.y + ')';
+          nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
         });
-      });
-    }
+      }
 
-    loadData();
+      function openModal(aid) {
+        const records = state.filteredRecs.filter(d => d.artwork_id === aid);
+        if (!records.length) return;
+
+        const basePost = records[0];
+        const rankedList = records.slice().sort((a, b) => {
+          const rankWeight = { top1: 1, top2: 2, top3: 3 };
+          return (rankWeight[a.rank] || 9) - (rankWeight[b.rank] || 9);
+        });
+
+        let html = `<h2>📝 投稿詳細</h2>`;
+        if (basePost.image_file_path_thumbnail) {
+          html += `<img src="${basePost.image_file_path_thumbnail}" alt="" onerror="this.style.display='none'">`;
+        }
+
+        html += `
+          <p style="margin-bottom:12px;line-height:1.65">${basePost.sentence || ''}</p>
+          <table>
+            <tr><th>性別</th><td>${basePost.gender || '-'}</td></tr>
+            <tr><th>年代</th><td>${basePost.age_group || '-'} (${basePost.age_group_half || '-'})</td></tr>
+            <tr><th>投稿日時</th><td>${basePost.post_dated_at || '-'}</td></tr>
+            <tr><th>エリア</th><td>${basePost.nearest_AreaGroup || ''} / ${basePost.nearest_Area || ''}</td></tr>
+            <tr><th>座標</th><td>${basePost.latitude || '-'}, ${basePost.longitude || '-'}</td></tr>
+          </table>
+          <h3 style="margin:16px 0 8px;font-size:.9rem">WB指標 Top1〜3</h3>
+          <table>
+            <tr><th>順位</th><th>指標</th><th>スコア</th><th>根拠</th></tr>
+        `;
+
+        rankedList.forEach(r => {
+          const scoreVal = (r.score !== '' && r.score !== undefined) ? r.score : '-';
+          const scorePercent = scoreVal !== '-' ? scoreVal : 0;
+          const barColor = scorePercent >= 70 ? 'var(--success)' : scorePercent >= 40 ? 'var(--warn)' : 'var(--danger)';
+
+          html += `
+            <tr>
+              <td>${r.rank || '-'}</td>
+              <td><span class="tw" data-tip="${window.CATEGORY_DESCRIPTIONS[r.category] || ''}">${r.category || '-'}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${scoreVal}
+                  <div class="sb" style="width:80px">
+                    <div class="f" style="width:${scorePercent}%;background:${barColor}"></div>
+                  </div>
+                </div>
+              </td>
+              <td>${(r.reason || '').split(/[,、，]/).map(t => t.trim()).filter(Boolean).map(t => `<span class="tag">${t}</span>`).join('')}</td>
+            </tr>
+          `;
+        });
+
+        html += `</table>`;
+        $('mbd').innerHTML = html;
+        $('mov').classList.add('show');
+      }
+
+      function closeModal() {
+        $('mov').classList.remove('show');
+      }
+
+      // 起動
+      loadData();
+    })();
   </script>
 </body>
 </html>
