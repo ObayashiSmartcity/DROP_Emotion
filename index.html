@@ -405,4 +405,443 @@
       margin-top:6px;
       display:flex;
       gap:8px;
+      flex-wrap:wrap;
+    }
 
+    .anomaly-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:.8rem;
+    }
+
+    .anomaly-table th,.anomaly-table td{
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+    }
+
+    .anomaly-table th{
+      color:var(--text2);
+      font-weight:600;
+      font-size:.72rem;
+      text-transform:uppercase;
+    }
+
+    .anomaly-table tr{
+      cursor:pointer;
+      transition:.15s;
+    }
+    .anomaly-table tr:hover{background:var(--surface2)}
+    .anomaly-high{color:var(--success)}
+    .anomaly-low{color:var(--danger)}
+
+    .modal-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.7);
+      z-index:2000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .modal-overlay.show{display:flex}
+
+    .modal{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      max-width:760px;
+      width:100%;
+      max-height:88vh;
+      overflow-y:auto;
+      padding:24px;
+      position:relative;
+    }
+
+    .modal .close{
+      position:absolute;
+      top:12px;
+      right:16px;
+      font-size:1.3rem;
+      cursor:pointer;
+      color:var(--text2);
+      background:none;
+      border:none;
+    }
+    .modal .close:hover{color:var(--text)}
+
+    .modal h2{margin-bottom:16px;font-size:1.1rem}
+
+    .modal img{
+      max-width:100%;
+      border-radius:var(--radius);
+      margin-bottom:12px;
+    }
+
+    .modal table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:.82rem;
+    }
+
+    .modal table th,.modal table td{
+      padding:8px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    .modal table th{
+      color:var(--accent);
+      font-weight:600;
+      width:140px;
+    }
+
+    .score-bar{
+      height:6px;
+      background:var(--bg);
+      border-radius:3px;
+      overflow:hidden;
+      min-width:70px;
+    }
+    .score-bar .fill{
+      height:100%;
+      border-radius:3px;
+      transition:.3s;
+    }
+
+    #map{
+      width:100%;
+      height:calc(100vh - 160px);
+      border-radius:var(--radius);
+      z-index:1;
+      display:block;
+    }
+
+    #network{
+      width:100%;
+      height:calc(100vh - 160px);
+      border-radius:var(--radius);
+      background:var(--bg);
+      display:block;
+    }
+
+    @media(max-width:900px){
+      .layout{flex-direction:column}
+      .sidebar{
+        width:100%;
+        min-width:unset;
+        max-height:42vh;
+        border-right:none;
+        border-bottom:1px solid var(--border);
+      }
+      .grid3{grid-template-columns:1fr}
+      #map,#network{height:calc(100vh - 220px)}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>DROPS分析ダッシュボード</h1>
+      <div class="subtitle">感性の価値化 — ウェルビーイング指標による投稿分析</div>
+    </div>
+    <span class="badge" id="postCount">0 投稿</span>
+    <span class="badge" style="background:var(--accent2)" id="filteredCount">0 表示中</span>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h3>🔍 フィルター</h3>
+      <div class="filter-note">※ フィルタは選択時に自動反映されます</div>
+
+      <div class="filter-group">
+        <label>イベント種別 (tenant)</label>
+        <select id="fTenant"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>性別 (gender)</label>
+        <select id="fGender"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>年代 (age_group)</label>
+        <select id="fAge"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>エリアグループ</label>
+        <select id="fAreaGroup"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>エリア</label>
+        <select id="fArea"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>WB指標 (category)</label>
+        <select id="fCategory"><option value="">すべて</option></select>
+      </div>
+
+      <div class="filter-group">
+        <label>投稿日（開始）</label>
+        <input type="date" id="fDateFrom">
+      </div>
+
+      <div class="filter-group">
+        <label>投稿日（終了）</label>
+        <input type="date" id="fDateTo">
+      </div>
+
+      <button class="btn btn-secondary" onclick="resetFilters()">🔄 リセット</button>
+
+      <div class="filter-group">
+        <label>エリア分析：最低投稿数</label>
+        <div class="slider-group">
+          <input type="range" id="minPosts" min="1" max="20" value="1">
+          <span class="val" id="minPostsVal">1</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="tabs">
+        <button class="tab active" data-tab="overview">📊 概要</button>
+        <button class="tab" data-tab="area">🗺️ エリア分析</button>
+        <button class="tab" data-tab="anomaly">🔬 特異スコア</button>
+        <button class="tab" data-tab="posts">📝 投稿一覧</button>
+        <button class="tab" data-tab="mapview">📍 地図</button>
+        <button class="tab" data-tab="networkview">🔗 共起ネットワーク</button>
+      </div>
+
+      <!-- 概要 -->
+      <section class="tab-content active" id="tc-overview">
+        <div class="grid3" id="statCards"></div>
+
+        <div class="card">
+          <h2><span class="icon">📊</span> ウェルビーイング指標別スコア分布</h2>
+          <div class="rank-toggle" id="rankToggle">
+            <button class="active" data-rank="top1">Top1</button>
+            <button data-rank="top2">Top2</button>
+            <button data-rank="top3">Top3</button>
+            <button data-rank="all">すべて</button>
+          </div>
+          <div class="chart-container">
+            <canvas id="chartCategoryBar"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="icon">📈</span> 指標別 平均スコア</h2>
+          <div class="chart-container">
+            <canvas id="chartAvgScore"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="icon">🏷️</span> 指標別キーワード（reason）</h2>
+          <div id="reasonTags"></div>
+        </div>
+      </section>
+
+      <!-- エリア分析 -->
+      <section class="tab-content" id="tc-area">
+        <div class="card">
+          <h2><span class="icon">🗺️</span> エリア別レーダーチャート比較</h2>
+          <div class="chart-container" style="max-height:520px;min-height:420px;">
+            <canvas id="chartRadar"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="icon">📊</span> エリア別投稿数</h2>
+          <div class="chart-container">
+            <canvas id="chartAreaBar"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- 特異スコア -->
+      <section class="tab-content" id="tc-anomaly">
+        <div class="card">
+          <h2><span class="icon">🔬</span> 特異スコア検出（全体平均との差の大きい エリア×指標）</h2>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">
+            乖離度＝エリア平均 − 全体平均。絶対値が大きい順に表示します。行クリックで該当投稿を表示します。
+          </p>
+          <div style="overflow-x:auto">
+            <table class="anomaly-table" id="anomalyTable">
+              <thead>
+                <tr>
+                  <th>エリア</th>
+                  <th>指標</th>
+                  <th>エリア平均</th>
+                  <th>全体平均</th>
+                  <th>乖離度</th>
+                  <th>件数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" id="anomalyPosts" style="display:none">
+          <h2><span class="icon">📝</span> 該当投稿一覧</h2>
+          <div class="post-list" id="anomalyPostList"></div>
+        </div>
+      </section>
+
+      <!-- 投稿一覧 -->
+      <section class="tab-content" id="tc-posts">
+        <div class="card">
+          <h2><span class="icon">📝</span> 投稿一覧 <span id="postsShown" style="font-size:.75rem;color:var(--text2)"></span></h2>
+          <div class="post-list" id="postList"></div>
+        </div>
+      </section>
+
+      <!-- 地図 -->
+      <section class="tab-content" id="tc-mapview">
+        <div class="fullsize-card">
+          <h2><span class="icon">📍</span> 投稿位置マップ</h2>
+          <div id="map"></div>
+        </div>
+      </section>
+
+      <!-- 共起ネットワーク -->
+      <section class="tab-content" id="tc-networkview">
+        <div class="fullsize-card">
+          <h2><span class="icon">🔗</span> キーワード共起ネットワーク（reason由来）</h2>
+          <svg id="network"></svg>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 投稿詳細モーダル -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="close" onclick="closeModal()">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== カテゴリ説明 =====
+    const categoryDescriptions = {
+      "美しい周辺環境": "自然景観や建築美など、視覚的な美しさに関する感性価値",
+      "文化の創造": "歴史・芸術・伝統文化など、文化的価値の創出や継承に関する指標",
+      "楽しさ": "ワクワク感や娯楽性など、楽しい体験に関する感性価値",
+      "快適な生活": "住みやすさ・利便性・居心地の良さに関する指標",
+      "コミュニティとの繋がり": "地域社会との交流や共同体意識に関する指標",
+      "先進的な生活": "革新的技術・先端的なライフスタイルに関する指標",
+      "自身の成長": "学びや自己啓発、個人の成長に関する指標",
+      "趣味・嗜好": "個人の好みや趣味活動に関する感性価値"
+    };
+
+    const COLORS = ['#4f8cff','#6c5ce7','#00cec9','#ff6b6b','#ffd43b','#51cf66','#fd79a8','#e17055','#74b9ff','#a29bfe','#55efc4','#fab1a0'];
+
+    let rawData = [];
+    let filteredData = [];
+    let uniquePosts = [];
+    let leafletMap = null;
+    let markerGroup = null;
+
+    let chartCategoryBar = null;
+    let chartAvgScore = null;
+    let chartRadar = null;
+    let chartAreaBar = null;
+
+    let currentRanks = ['top1'];
+
+    // ===== 起動 =====
+    loadData();
+
+    async function loadData(){
+      try{
+        const res = await fetch('drop.json');
+        if(!res.ok) throw new Error('drop.json が見つかりません');
+        rawData = await res.json();
+        initFilters();
+        bindFilterEvents();
+        applyFilters();
+      }catch(e){
+        document.querySelector('.main').innerHTML = `
+          <div class="card">
+            <h2>⚠️ データ読み込みエラー</h2>
+            <p>${e.message}</p>
+            <p style="margin-top:8px;font-size:.8rem;color:var(--text2)">
+              drop.json を index.html と同じディレクトリに配置してください。
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    // ===== フィルター初期化 =====
+    function initFilters(){
+      const uniq = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
+      populateSelect('fTenant', uniq('tenant'));
+      populateSelect('fGender', uniq('gender'));
+      populateSelect('fAge', uniq('age_group'));
+      populateSelect('fAreaGroup', uniq('nearest_AreaGroup'));
+      populateSelect('fArea', uniq('nearest_Area'));
+      populateSelect('fCategory', [...new Set(rawData.map(d => d.category).filter(Boolean))].sort());
+    }
+
+    function populateSelect(id, options){
+      const el = document.getElementById(id);
+      const current = el.value;
+      while(el.options.length > 1) el.remove(1);
+      options.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        el.appendChild(opt);
+      });
+      el.value = current || '';
+    }
+
+    // ===== フィルター自動反映 =====
+    function bindFilterEvents(){
+      ['fTenant','fGender','fAge','fAreaGroup','fArea','fCategory'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('change', applyFilters);
+      });
+
+      ['fDateFrom','fDateTo'].forEach(id => {
+        const el = document.getElementById(id);
+        el.addEventListener('change', applyFilters);
+        el.addEventListener('input', applyFilters);
+      });
+    }
+
+    function resetFilters(){
+      ['fTenant','fGender','fAge','fAreaGroup','fArea','fCategory'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('fDateFrom').value = '';
+      document.getElementById('fDateTo').value = '';
+      applyFilters();
+    }
+
+    function parseDate(s){
+      if(!s) return null;
+      return new Date((s || '').replace(/\//g,'-'));
+    }
+
+    function getUniqueCount(data){
+      return new Set(data.map(d => d.artwork_id)).size;
+    }
+
+    // ===== フィルタ適用 =====
+    function applyFilters(){
+      const fTenant = document.getElementById('fTenant').value;
+      const fGender = document.getElementById('fGender').value;
+      const fAge = document.getElementById('fAge').value;
+      const fAreaGroup = document.getElementById('fAreaGroup').value;
+      const fArea = document.getElementById('fArea').value;
+      const fCategory = document.getElementById('fCategory').value;
+      const fDateFrom = document.getElementById('fDateFrom').value;
