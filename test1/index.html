@@ -699,6 +699,143 @@
         height: calc(100vh - 220px);
       }
     }
+/* =========================
+   タイポグラフィックテーマ
+========================= */
+
+/* ベース */
+body {
+  font-family: 
+    "Helvetica Neue", 
+    "Hiragino Sans", 
+    "Noto Sans JP", 
+    Arial, sans-serif;
+  letter-spacing: 0.02em;
+  line-height: 1.7;
+  background: #ffffff;
+  color: #111;
+}
+
+/* 見出し */
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4em;
+}
+
+h1 {
+  font-size: 22px;
+  letter-spacing: 0.05em;
+}
+
+h2 {
+  font-size: 16px;
+  color: #333;
+}
+
+/* セクション（カード感を消す） */
+.section, .card {
+  background: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid #eee;
+}
+
+/* ボタン（ミニマル） */
+button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  color: #000;
+}
+
+/* 選択状態 */
+button.on {
+  color: #000;
+  font-weight: 600;
+  position: relative;
+}
+
+button.on::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: #000;
+}
+
+/* ラベル・UI */
+label, .label {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 数値表示（重要） */
+.value {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* 小さい補足 */
+.subtext {
+  font-size: 12px;
+  color: #888;
+}
+
+/* リスト */
+ul, li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* テーブル */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border-bottom: 1px solid #eee;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+/* グラフ余白（呼吸感） */
+canvas {
+  margin: 8px 0 20px;
+}
+
+/* モーダル */
+.modal-content {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.modal h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* 地図ポップアップ */
+.leaflet-popup-content {
+  font-size: 12px;
+  line-height: 1.5;
+}
   </style>
 </head>
 <body>
