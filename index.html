@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DROPs分析ダッシュボード - 感性の価値化</title>
+  <title>DROPS分析ダッシュボード - 感性の価値化</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -721,7 +721,7 @@
     <aside class="side">
       <h3>🔍 フィルター</h3>
       <div class="fnote">※ フィルタは選択時に自動反映されます</div>
-      <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
+      <div id="ls" class="st">drop.json を読み込み中...</div>
 
       <div class="fg"><label>イベント種別</label><select id="fT"><option value="">すべて</option></select></div>
       <div class="fg"><label>性別</label><select id="fG"><option value="">すべて</option></select></div>
@@ -779,7 +779,7 @@
       <div class="tc" id="t-ar">
         <div class="card">
           <h2>📊 エリア比較</h2>
-          <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。（Top1〜20全ランク対象）</p>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。</p>
           <div class="cb tall"><canvas id="c3"></canvas></div>
         </div>
         <div class="card">
@@ -791,7 +791,7 @@
       <div class="tc" id="t-an">
         <div class="card">
           <h2>🔬 特異スコア検出</h2>
-          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均（Top1〜20全ランク対象）。行クリックで該当投稿を表示。</p>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均。行クリックで該当投稿を表示。</p>
           <div style="overflow-x:auto">
             <table class="at" id="atb">
               <thead>
@@ -901,7 +901,7 @@
         }
 
         try {
-          const res = await fetch('./drop_wb20.json', { cache: 'no-store' });
+          const res = await fetch('./drop.json', { cache: 'no-store' });
           if (!res.ok) throw new Error(`データの取得に失敗しました (HTTP ${res.status})`);
           
           const json = await res.json();
@@ -1220,10 +1220,10 @@
         const gridColor = getThemeValue('--grid');
         const minPostsThreshold = parseInt($('mp').value, 10) || 1;
 
-        const allRankData = state.filteredRecs.filter(d => d.category);
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
         const areaData = {};
 
-        allRankData.forEach(d => {
+        top1Data.forEach(d => {
           const areaName = d.nearest_AreaGroup || d.nearest_Area || '不明';
           if (!areaData[areaName]) areaData[areaName] = { postIds: new Set(), categories: {} };
           areaData[areaName].postIds.add(d.artwork_id);
@@ -1242,7 +1242,7 @@
           .filter(a => areaData[a].postIds.size >= minPostsThreshold)
           .sort((a, b) => areaData[b].postIds.size - areaData[a].postIds.size);
 
-        const availableCategories = [...new Set(allRankData.map(d => d.category))].sort();
+        const availableCategories = [...new Set(top1Data.map(d => d.category))].sort();
 
         if (state.charts.ch3) state.charts.ch3.destroy();
         state.charts.ch3 = new Chart($('c3').getContext('2d'), {
@@ -1295,10 +1295,10 @@
       }
 
       function renderAnomalyDetection() {
-        const allRankData = state.filteredRecs.filter(d => d.category);
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
         const globalCategoryStats = {};
 
-        allRankData.forEach(d => {
+        top1Data.forEach(d => {
           if (!globalCategoryStats[d.category]) globalCategoryStats[d.category] = { total: 0, count: 0 };
           const s = Number(d.score);
           if (!isNaN(s)) {
@@ -1313,7 +1313,7 @@
         });
 
         const areaCategoryPairStats = {};
-        allRankData.forEach(d => {
+        top1Data.forEach(d => {
           const area = d.nearest_AreaGroup || d.nearest_Area || '不明';
           const complexKey = `${area}|||${d.category}`;
           if (!areaCategoryPairStats[complexKey]) {
