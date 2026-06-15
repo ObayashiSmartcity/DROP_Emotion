@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DROPS分析ダッシュボード - 感性の価値化</title>
+  <title>DROPs分析ダッシュボード - 感性の価値化</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -699,6 +699,42 @@
         height: calc(100vh - 220px);
       }
     }
+
+    /* Multi-select dropdown */
+    .ms-wrap { position: relative; }
+    .ms-toggle {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 10px; border-radius: 10px; font-size: .83rem;
+      outline: none; cursor: pointer; text-align: left;
+      transition: background .3s, color .3s, border-color .2s; font: inherit;
+    }
+    .ms-toggle:hover { border-color: var(--blue); }
+    .ms-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      max-height: 240px; overflow-y: auto; box-shadow: var(--shadow); margin-top: 4px;
+    }
+    .ms-dropdown.open { display: block; }
+    .ms-option {
+      display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+      font-size: .82rem; cursor: pointer; transition: background .15s; user-select: none; color: var(--text);
+    }
+    .ms-option:hover { background: var(--surface2); }
+    .ms-option input[type="checkbox"] { accent-color: var(--blue); width: 15px; height: 15px; cursor: pointer; }
+    .ms-option:first-child { border-radius: 10px 10px 0 0; }
+    .ms-option:last-child { border-radius: 0 0 10px 10px; }
+
+    /* Pagination */
+    .pager { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+    .pager button {
+      padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer; font-size: .78rem;
+      font-weight: 600; transition: .2s;
+    }
+    .pager button:hover { border-color: var(--blue); color: var(--blue); }
+    .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
+    .pager button:disabled { opacity: .4; cursor: default; }
+    .pager .pinfo { font-size: .76rem; color: var(--text2); }
   </style>
 </head>
 <body>
@@ -721,14 +757,14 @@
     <aside class="side">
       <h3>🔍 フィルター</h3>
       <div class="fnote">※ フィルタは選択時に自動反映されます</div>
-      <div id="ls" class="st">drop.json を読み込み中...</div>
+      <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
 
-      <div class="fg"><label>イベント種別</label><select id="fT"><option value="">すべて</option></select></div>
-      <div class="fg"><label>性別</label><select id="fG"><option value="">すべて</option></select></div>
-      <div class="fg"><label>年代</label><select id="fA"><option value="">すべて</option></select></div>
-      <div class="fg"><label>エリアグループ</label><select id="fAG"><option value="">すべて</option></select></div>
-      <div class="fg"><label>エリア</label><select id="fAR"><option value="">すべて</option></select></div>
-      <div class="fg"><label>WB指標</label><select id="fC"><option value="">すべて</option></select></div>
+      <div class="fg"><label>イベント種別</label><div class="ms-wrap" id="fT"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>性別</label><div class="ms-wrap" id="fG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>年代</label><div class="ms-wrap" id="fA"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>エリアグループ</label><div class="ms-wrap" id="fAG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>エリア</label><div class="ms-wrap" id="fAR"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
       <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
       <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
       <button class="btn btn2" id="rb">🔄 リセット</button>
@@ -757,9 +793,9 @@
         <div class="card">
           <h2>📊 WB指標別スコア分布</h2>
           <div class="rt" id="rtg">
-            <button class="on" data-r="top1">Top1</button>
-            <button data-r="top2">Top2</button>
-            <button data-r="top3">Top3</button>
+            <button class="on" data-r="top1">Top1のみ</button>
+            <button data-r="top2">Top2まで</button>
+            <button data-r="top3">Top3まで</button>
             <button data-r="all">すべて</button>
           </div>
           <div class="cb"><canvas id="c1"></canvas></div>
@@ -779,19 +815,20 @@
       <div class="tc" id="t-ar">
         <div class="card">
           <h2>📊 エリア比較</h2>
-          <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。</p>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。（Top1〜20全ランク対象）</p>
           <div class="cb tall"><canvas id="c3"></canvas></div>
         </div>
         <div class="card">
-          <h2>🟢 エリア別投稿数</h2>
-          <div class="cb"><canvas id="c4"></canvas></div>
+          <h2>📝 投稿一覧 <span id="arps" style="font-size:.75rem;color:var(--text2)"></span></h2>
+          <div class="pl" id="arpls"></div>
+          <div class="pager" id="arpgr"></div>
         </div>
       </div>
 
       <div class="tc" id="t-an">
         <div class="card">
           <h2>🔬 特異スコア検出</h2>
-          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均。行クリックで該当投稿を表示。</p>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均（Top1〜20全ランク対象）。行クリックで該当投稿を表示。</p>
           <div style="overflow-x:auto">
             <table class="at" id="atb">
               <thead>
@@ -818,6 +855,7 @@
         <div class="card">
           <h2>📝 投稿一覧 <span id="ps" style="font-size:.75rem;color:var(--text2)"></span></h2>
           <div class="pl" id="pls"></div>
+          <div class="pager" id="ppgr"></div>
         </div>
       </div>
 
@@ -856,7 +894,7 @@
         theme: window.DEFAULT_THEME || 'light',
         map: null,
         mapMarkerGroup: null,
-        charts: { ch1: null, ch2: null, ch3: null, ch4: null }
+        charts: { ch1: null, ch2: null, ch3: null }
       };
 
       // 定数設定
@@ -901,7 +939,7 @@
         }
 
         try {
-          const res = await fetch('./drop.json', { cache: 'no-store' });
+          const res = await fetch('./drop_wb20.json', { cache: 'no-store' });
           if (!res.ok) throw new Error(`データの取得に失敗しました (HTTP ${res.status})`);
           
           const json = await res.json();
@@ -923,16 +961,38 @@
       }
 
       function populateSelect(id, options) {
-        const select = $(id);
-        const currentVal = select.value;
-        while (select.options.length > 1) select.remove(1);
+        const wrap = $(id);
+        const dropdown = wrap.querySelector('.ms-dropdown');
+        const prevChecked = new Set(
+          Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
+        );
+        dropdown.innerHTML = '';
         options.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value = v;
-          opt.text = v;
-          select.add(opt);
+          const label = document.createElement('label');
+          label.className = 'ms-option';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = v;
+          if (prevChecked.has(v)) cb.checked = true;
+          cb.addEventListener('change', () => { updateToggleText(id); applyFilters(); });
+          const span = document.createElement('span');
+          span.textContent = v;
+          label.appendChild(cb);
+          label.appendChild(span);
+          dropdown.appendChild(label);
         });
-        select.value = currentVal || '';
+        updateToggleText(id);
+      }
+      function getMultiSelectValues(id) {
+        return Array.from($(id).querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      }
+      function updateToggleText(id) {
+        const wrap = $(id);
+        const toggle = wrap.querySelector('.ms-toggle');
+        const checked = getMultiSelectValues(id);
+        if (checked.length === 0) toggle.textContent = 'すべて ▾';
+        else if (checked.length === 1) toggle.textContent = checked[0] + ' ▾';
+        else toggle.textContent = checked.length + '件選択中 ▾';
       }
 
       function initFilters() {
@@ -947,14 +1007,32 @@
       }
 
       function bindEvents() {
-        ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).addEventListener('change', applyFilters));
+        // Multi-select toggle
+        document.querySelectorAll('.ms-toggle').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dd = this.nextElementSibling;
+            const isOpen = dd.classList.contains('open');
+            document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+            if (!isOpen) dd.classList.add('open');
+          });
+        });
+        document.addEventListener('click', e => {
+          if (!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+        });
+        document.querySelectorAll('.ms-dropdown').forEach(dd => {
+          dd.addEventListener('click', e => e.stopPropagation());
+        });
         ['fDF', 'fDT'].forEach(id => {
           $(id).addEventListener('change', applyFilters);
           $(id).addEventListener('input', applyFilters);
         });
 
         $('rb').addEventListener('click', () => {
-          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).value = '');
+          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => {
+            $(id).querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateToggleText(id);
+          });
           $('fDF').value = '';
           $('fDT').value = '';
           applyFilters();
@@ -985,7 +1063,11 @@
           btn.addEventListener('click', function() {
             document.querySelectorAll('#rtg button').forEach(x => x.classList.remove('on'));
             this.classList.add('on');
-            state.currentRanks = this.dataset.r === 'all' ? ['top1', 'top2', 'top3'] : [this.dataset.r];
+            const r = this.dataset.r;
+            if (r === 'top1') state.currentRanks = ['top1'];
+            else if (r === 'top2') state.currentRanks = ['top1', 'top2'];
+            else if (r === 'top3') state.currentRanks = ['top1', 'top2', 'top3'];
+            else state.currentRanks = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
             renderDistributionChart();
           });
         });
@@ -1000,23 +1082,23 @@
 
       function applyFilters() {
         const filters = {
-          tenant: $('fT').value,
-          gender: $('fG').value,
-          age: $('fA').value,
-          areaGroup: $('fAG').value,
-          area: $('fAR').value,
-          category: $('fC').value,
+          tenant: getMultiSelectValues('fT'),
+          gender: getMultiSelectValues('fG'),
+          age: getMultiSelectValues('fA'),
+          areaGroup: getMultiSelectValues('fAG'),
+          area: getMultiSelectValues('fAR'),
+          category: getMultiSelectValues('fC'),
           dateFrom: $('fDF').value,
           dateTo: $('fDT').value
         };
 
         state.filteredRecs = state.raw.filter(d => {
-          if (filters.tenant && d.tenant !== filters.tenant) return false;
-          if (filters.gender && d.gender !== filters.gender) return false;
-          if (filters.age && d.age_group !== filters.age) return false;
-          if (filters.areaGroup && d.nearest_AreaGroup !== filters.areaGroup) return false;
-          if (filters.area && d.nearest_Area !== filters.area) return false;
-          if (filters.category && d.category !== filters.category) return false;
+          if (filters.tenant.length && !filters.tenant.includes(d.tenant)) return false;
+          if (filters.gender.length && !filters.gender.includes(d.gender)) return false;
+          if (filters.age.length && !filters.age.includes(d.age_group)) return false;
+          if (filters.areaGroup.length && !filters.areaGroup.includes(d.nearest_AreaGroup)) return false;
+          if (filters.area.length && !filters.area.includes(d.nearest_Area)) return false;
+          if (filters.category.length && !filters.category.includes(d.category)) return false;
 
           if (filters.dateFrom || filters.dateTo) {
             const pd = parseCustomDate(d.post_dated_at);
@@ -1043,6 +1125,8 @@
 
         $('pc').textContent = `${getUniquePostCount(state.raw)} 投稿`;
         $('fc').textContent = `${state.uniquePosts.length} 表示中`;
+        state.poPage = 1;
+        state.arPage = 1;
         
         renderActiveTab();
       }
@@ -1220,10 +1304,10 @@
         const gridColor = getThemeValue('--grid');
         const minPostsThreshold = parseInt($('mp').value, 10) || 1;
 
-        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const allRankData = state.filteredRecs.filter(d => d.category);
         const areaData = {};
 
-        top1Data.forEach(d => {
+        allRankData.forEach(d => {
           const areaName = d.nearest_AreaGroup || d.nearest_Area || '不明';
           if (!areaData[areaName]) areaData[areaName] = { postIds: new Set(), categories: {} };
           areaData[areaName].postIds.add(d.artwork_id);
@@ -1242,7 +1326,7 @@
           .filter(a => areaData[a].postIds.size >= minPostsThreshold)
           .sort((a, b) => areaData[b].postIds.size - areaData[a].postIds.size);
 
-        const availableCategories = [...new Set(top1Data.map(d => d.category))].sort();
+        const availableCategories = [...new Set(allRankData.map(d => d.category))].sort();
 
         if (state.charts.ch3) state.charts.ch3.destroy();
         state.charts.ch3 = new Chart($('c3').getContext('2d'), {
@@ -1270,35 +1354,15 @@
           }
         });
 
-        if (state.charts.ch4) state.charts.ch4.destroy();
-        state.charts.ch4 = new Chart($('c4').getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels: sortedValidAreas,
-            datasets: [{
-              label: '投稿数',
-              data: sortedValidAreas.map(a => areaData[a].postIds.size),
-              backgroundColor: sortedValidAreas.map((_, idx) => config.area[idx % config.area.length]),
-              borderRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: tickColor }, grid: { display: false } },
-              y: { ticks: { color: tickColor }, grid: { color: gridColor } }
-            }
-          }
-        });
+        // エリア分析: 投稿一覧
+        renderPaginatedList('arpls', 'arpgr', 'arps', state.uniquePosts, 'arPage');
       }
 
       function renderAnomalyDetection() {
-        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const allRankData = state.filteredRecs.filter(d => d.category);
         const globalCategoryStats = {};
 
-        top1Data.forEach(d => {
+        allRankData.forEach(d => {
           if (!globalCategoryStats[d.category]) globalCategoryStats[d.category] = { total: 0, count: 0 };
           const s = Number(d.score);
           if (!isNaN(s)) {
@@ -1313,7 +1377,7 @@
         });
 
         const areaCategoryPairStats = {};
-        top1Data.forEach(d => {
+        allRankData.forEach(d => {
           const area = d.nearest_AreaGroup || d.nearest_Area || '不明';
           const complexKey = `${area}|||${d.category}`;
           if (!areaCategoryPairStats[complexKey]) {
@@ -1396,16 +1460,72 @@
         $('ap').scrollIntoView({ behavior: 'smooth' });
       }
 
-      function renderPostList() {
-        const container = $('pls');
-        container.innerHTML = '';
-        const displayLimit = state.uniquePosts.slice(0, 100);
-        $('ps').textContent = `(${displayLimit.length}/${state.uniquePosts.length}件)`;
+      function renderPaginatedList(containerId, pagerId, countSpanId, posts, pageKey) {
+        const PAGE_SIZE = 100;
+        if (!state[pageKey]) state[pageKey] = 1;
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        if (state[pageKey] > totalPages) state[pageKey] = totalPages;
+        const page = state[pageKey];
+        const start = (page - 1) * PAGE_SIZE;
+        const end = Math.min(start + PAGE_SIZE, posts.length);
+        const pageItems = posts.slice(start, end);
 
-        displayLimit.forEach(p => {
-          const top1Post = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
-          container.appendChild(createPostListItemElement(top1Post));
+        $(countSpanId).textContent = posts.length === 0
+          ? '(0件)'
+          : '(' + (start + 1) + '〜' + end + ' / ' + posts.length + '件)';
+
+        const container = $(containerId);
+        container.innerHTML = '';
+        pageItems.forEach(p => {
+          const top1 = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
+          container.appendChild(createPostListItemElement(top1));
         });
+
+        const pager = $(pagerId);
+        pager.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const goPage = (tp) => {
+          state[pageKey] = tp;
+          renderPaginatedList(containerId, pagerId, countSpanId, posts, pageKey);
+          $(containerId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        const addBtn = (label, targetPage, isCurrent) => {
+          const btn = document.createElement('button');
+          btn.textContent = label;
+          if (isCurrent) btn.classList.add('on');
+          btn.disabled = isCurrent;
+          btn.addEventListener('click', () => goPage(targetPage));
+          pager.appendChild(btn);
+        };
+
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '◀ 前へ';
+        prevBtn.disabled = (page === 1);
+        prevBtn.addEventListener('click', () => goPage(page - 1));
+        pager.appendChild(prevBtn);
+
+        let startP = Math.max(1, page - 3);
+        let endP = Math.min(totalPages, page + 3);
+        if (startP > 1) {
+          addBtn('1', 1, page === 1);
+          if (startP > 2) { const sp = document.createElement('span'); sp.className = 'pinfo'; sp.textContent = '…'; pager.appendChild(sp); }
+        }
+        for (let i = startP; i <= endP; i++) addBtn(String(i), i, i === page);
+        if (endP < totalPages) {
+          if (endP < totalPages - 1) { const sp = document.createElement('span'); sp.className = 'pinfo'; sp.textContent = '…'; pager.appendChild(sp); }
+          addBtn(String(totalPages), totalPages, page === totalPages);
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '次へ ▶';
+        nextBtn.disabled = (page === totalPages);
+        nextBtn.addEventListener('click', () => goPage(page + 1));
+        pager.appendChild(nextBtn);
+      }
+
+      function renderPostList() {
+        renderPaginatedList('pls', 'ppgr', 'ps', state.uniquePosts, 'poPage');
       }
 
       function calculateDensityCenter(coords) {
