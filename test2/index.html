@@ -735,6 +735,24 @@
     .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
     .pager button:disabled { opacity: .4; cursor: default; }
     .pager .pinfo { font-size: .76rem; color: var(--text2); }
+    /* Exclude filter textarea */
+    .fg textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: .83rem;
+      outline: none;
+      transition: background .3s, color .3s;
+      resize: vertical;
+      min-height: 60px;
+      font-family: inherit;
+    }
+    .fg textarea:focus {
+      border-color: var(--blue);
+    }
   </style>
 </head>
 <body>
@@ -767,6 +785,11 @@
       <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
       <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
       <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
+      <div class="fg">
+        <label>除外する投稿ID</label>
+        <textarea id="fExclude" placeholder="例: art_001, art_002&#10;カンマ・改行・スペース区切りで入力"></textarea>
+        <div class="fnote" style="margin-top:4px">※ artwork_id をカンマ・改行・スペース区切りで指定すると、該当投稿が除外されます</div>
+      </div>
       <button class="btn btn2" id="rb">🔄 リセット</button>
       <div class="fg">
         <label>エリア分析：最低投稿数</label>
@@ -1027,6 +1050,7 @@
           $(id).addEventListener('change', applyFilters);
           $(id).addEventListener('input', applyFilters);
         });
+        $('fExclude').addEventListener('input', applyFilters);
 
         $('rb').addEventListener('click', () => {
           ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => {
@@ -1035,6 +1059,7 @@
           });
           $('fDF').value = '';
           $('fDT').value = '';
+          $('fExclude').value = '';
           applyFilters();
         });
 
@@ -1092,7 +1117,12 @@
           dateTo: $('fDT').value
         };
 
+        const excludeRaw = $('fExclude').value;
+        const excludeIds = new Set(
+          excludeRaw.split(/[,\n\s]+/).map(s => s.trim()).filter(Boolean)
+        );
         state.filteredRecs = state.raw.filter(d => {
+          if (excludeIds.size && excludeIds.has(String(d.artwork_id))) return false;
           if (filters.tenant.length && !filters.tenant.includes(d.tenant)) return false;
           if (filters.gender.length && !filters.gender.includes(d.gender)) return false;
           if (filters.age.length && !filters.age.includes(d.age_group)) return false;
