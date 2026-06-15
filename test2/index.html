@@ -699,6 +699,72 @@
         height: calc(100vh - 220px);
       }
     }
+
+    /* Multi-select dropdown */
+    .ms-wrap {
+      position: relative;
+    }
+    .ms-toggle {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: .83rem;
+      outline: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background .3s, color .3s, border-color .2s;
+      font: inherit;
+    }
+    .ms-toggle:hover {
+      border-color: var(--blue);
+    }
+    .ms-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+      margin-top: 4px;
+    }
+    .ms-dropdown.open {
+      display: block;
+    }
+    .ms-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .15s;
+      user-select: none;
+      color: var(--text);
+    }
+    .ms-option:hover {
+      background: var(--surface2);
+    }
+    .ms-option input[type="checkbox"] {
+      accent-color: var(--blue);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+    .ms-option:first-child {
+      border-radius: 10px 10px 0 0;
+    }
+    .ms-option:last-child {
+      border-radius: 0 0 10px 10px;
+    }
   </style>
 </head>
 <body>
@@ -723,12 +789,12 @@
       <div class="fnote">※ フィルタは選択時に自動反映されます</div>
       <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
 
-      <div class="fg"><label>イベント種別</label><select id="fT"><option value="">すべて</option></select></div>
-      <div class="fg"><label>性別</label><select id="fG"><option value="">すべて</option></select></div>
-      <div class="fg"><label>年代</label><select id="fA"><option value="">すべて</option></select></div>
-      <div class="fg"><label>エリアグループ</label><select id="fAG"><option value="">すべて</option></select></div>
-      <div class="fg"><label>エリア</label><select id="fAR"><option value="">すべて</option></select></div>
-      <div class="fg"><label>WB指標</label><select id="fC"><option value="">すべて</option></select></div>
+      <div class="fg"><label>イベント種別</label><div class="ms-wrap" id="fT"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>性別</label><div class="ms-wrap" id="fG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>年代</label><div class="ms-wrap" id="fA"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>エリアグループ</label><div class="ms-wrap" id="fAG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>エリア</label><div class="ms-wrap" id="fAR"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+      <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
       <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
       <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
       <button class="btn btn2" id="rb">🔄 リセット</button>
@@ -923,16 +989,48 @@
       }
 
       function populateSelect(id, options) {
-        const select = $(id);
-        const currentVal = select.value;
-        while (select.options.length > 1) select.remove(1);
+        const wrap = $(id);
+        const dropdown = wrap.querySelector('.ms-dropdown');
+        const toggle = wrap.querySelector('.ms-toggle');
+        // Preserve currently checked values
+        const prevChecked = new Set(
+          Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
+        );
+        dropdown.innerHTML = '';
         options.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value = v;
-          opt.text = v;
-          select.add(opt);
+          const label = document.createElement('label');
+          label.className = 'ms-option';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = v;
+          if (prevChecked.has(v)) cb.checked = true;
+          cb.addEventListener('change', () => {
+            updateToggleText(id);
+            applyFilters();
+          });
+          const span = document.createElement('span');
+          span.textContent = v;
+          label.appendChild(cb);
+          label.appendChild(span);
+          dropdown.appendChild(label);
         });
-        select.value = currentVal || '';
+        updateToggleText(id);
+      }
+      function getMultiSelectValues(id) {
+        const wrap = $(id);
+        return Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      }
+      function updateToggleText(id) {
+        const wrap = $(id);
+        const toggle = wrap.querySelector('.ms-toggle');
+        const checked = getMultiSelectValues(id);
+        if (checked.length === 0) {
+          toggle.textContent = 'すべて ▾';
+        } else if (checked.length === 1) {
+          toggle.textContent = checked[0] + ' ▾';
+        } else {
+          toggle.textContent = checked.length + '件選択中 ▾';
+        }
       }
 
       function initFilters() {
@@ -947,14 +1045,37 @@
       }
 
       function bindEvents() {
-        ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).addEventListener('change', applyFilters));
+        // Multi-select toggle logic
+        document.querySelectorAll('.ms-toggle').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = this.nextElementSibling;
+            const isOpen = dropdown.classList.contains('open');
+            // Close all dropdowns first
+            document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+            if (!isOpen) dropdown.classList.add('open');
+          });
+        });
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.ms-wrap')) {
+            document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+          }
+        });
+        // Prevent click inside dropdown from closing it
+        document.querySelectorAll('.ms-dropdown').forEach(dd => {
+          dd.addEventListener('click', function(e) { e.stopPropagation(); });
+        });
         ['fDF', 'fDT'].forEach(id => {
           $(id).addEventListener('change', applyFilters);
           $(id).addEventListener('input', applyFilters);
         });
 
         $('rb').addEventListener('click', () => {
-          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => $(id).value = '');
+          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => {
+            $(id).querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateToggleText(id);
+          });
           $('fDF').value = '';
           $('fDT').value = '';
           applyFilters();
@@ -1000,23 +1121,23 @@
 
       function applyFilters() {
         const filters = {
-          tenant: $('fT').value,
-          gender: $('fG').value,
-          age: $('fA').value,
-          areaGroup: $('fAG').value,
-          area: $('fAR').value,
-          category: $('fC').value,
+          tenant: getMultiSelectValues('fT'),
+          gender: getMultiSelectValues('fG'),
+          age: getMultiSelectValues('fA'),
+          areaGroup: getMultiSelectValues('fAG'),
+          area: getMultiSelectValues('fAR'),
+          category: getMultiSelectValues('fC'),
           dateFrom: $('fDF').value,
           dateTo: $('fDT').value
         };
 
         state.filteredRecs = state.raw.filter(d => {
-          if (filters.tenant && d.tenant !== filters.tenant) return false;
-          if (filters.gender && d.gender !== filters.gender) return false;
-          if (filters.age && d.age_group !== filters.age) return false;
-          if (filters.areaGroup && d.nearest_AreaGroup !== filters.areaGroup) return false;
-          if (filters.area && d.nearest_Area !== filters.area) return false;
-          if (filters.category && d.category !== filters.category) return false;
+          if (filters.tenant.length && !filters.tenant.includes(d.tenant)) return false;
+          if (filters.gender.length && !filters.gender.includes(d.gender)) return false;
+          if (filters.age.length && !filters.age.includes(d.age_group)) return false;
+          if (filters.areaGroup.length && !filters.areaGroup.includes(d.nearest_AreaGroup)) return false;
+          if (filters.area.length && !filters.area.includes(d.nearest_Area)) return false;
+          if (filters.category.length && !filters.category.includes(d.category)) return false;
 
           if (filters.dateFrom || filters.dateTo) {
             const pd = parseCustomDate(d.post_dated_at);
