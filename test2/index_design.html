@@ -24,7 +24,7 @@
       --text: #0f172a;
       --text2: #64748b;
       --text-inv: #ffffff;
-      --blue: #0f766e;        /* 参考イメージに合わせた洗練されたディープグリーン */
+      --blue: #2563eb;        /* 洗練されたロイヤルブルー */
       --green: #10b981;
       --danger: #ef4444;
       --success: #10b981;
@@ -41,7 +41,7 @@
       --status-err-bg: #fef2f2;
       --status-err-bd: #fecaca;
       --status-err-tx: #991b1b;
-      --sidebar-bg: #115e59;   /* 深みのある美しいフォレストグリーン */
+      --sidebar-bg: #1e3a8a;   /* 深みのあるディープブルー */
     }
 
     [data-theme="dark"] {
@@ -52,7 +52,7 @@
       --text: #f3f4f6;
       --text2: #9ca3af;
       --text-inv: #111827;
-      --blue: #2dd4bf;
+      --blue: #60a5fa;
       --green: #34d399;
       --danger: #f87171;
       --success: #34d399;
@@ -69,7 +69,7 @@
       --status-err-bg: #450a0a;
       --status-err-bd: #991b1b;
       --status-err-tx: #fecaca;
-      --sidebar-bg: #064e3b;
+      --sidebar-bg: #172554;
     }
 
     * {
@@ -488,7 +488,7 @@
     }
 
     .tag.hl {
-      background: rgba(15, 118, 110, 0.08);
+      background: rgba(37, 99, 235, 0.08);
       color: var(--blue);
       font-weight: 600;
     }
@@ -865,13 +865,13 @@
   <div class="layout">
     <div class="sidebar-container">
       <div class="side-icon-bar">
-        <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉">🔍</button>
-        <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();">📊</button>
-        <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();">🗺️</button>
-        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();">🔬</button>
-        <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();">📝</button>
-        <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();">📍</button>
-        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();">🔗</button>
+        <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+        <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+        <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+        <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+        <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
+        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
       </div>
       
       <aside class="side" id="filterPanel">
