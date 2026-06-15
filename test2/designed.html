@@ -12,63 +12,64 @@
   <script src="./config.js"></script>
 
   <style>
-    /* WIRED 大林組 EXPO2025の世界観をインスパイアした「Monolithic Cyber & Exotic Grid」デザイン */
     :root {
-      --radius: 2px; /* ソリッドな建築的直線美 */
+      --radius: 12px;
     }
 
     [data-theme="light"] {
-      --bg: #f5f4f0; /* 上質な書籍を思わせるペーパーベージュ */
+      --bg: #f8fafc;
       --surface: #ffffff;
-      --surface2: #eae8e1;
-      --border: #111111; /* 強いエディトリアルライン */
-      --text: #111111;
-      --text2: #666666;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text2: #64748b;
       --text-inv: #ffffff;
-      --blue: #c5a059; /* 真鍮・ブロンズアクセント */
-      --green: #2a4d36; /* 伝統的な深緑 */
-      --danger: #992222;
-      --success: #2a4d36;
-      --warn: #b58900;
-      --grid: rgba(17, 17, 17, 0.08);
-      --tick: #444444;
-      --link-line: #111111;
-      --shadow: 2px 2px 0px rgba(17, 17, 17, 1); /* フラットブルータルシャドウ */
-      --scrollbar: #eae8e1;
-      --modal-backdrop: rgba(17, 17, 17, 0.85);
-      --status-ok-bg: #eae8e1;
-      --status-ok-bd: #111111;
-      --status-ok-tx: #2a4d36;
-      --status-err-bg: #fbebe8;
-      --status-err-bd: #992222;
-      --status-err-tx: #992222;
+      --blue: #0f766e;        /* 参考イメージに合わせた洗練されたディープグリーン */
+      --green: #10b981;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --grid: #f1f5f9;
+      --tick: #94a3b8;
+      --link-line: #cbd5e1;
+      --shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+      --scrollbar: #e2e8f0;
+      --modal-backdrop: rgba(15, 23, 42, 0.3);
+      --status-ok-bg: #f0fdf4;
+      --status-ok-bd: #bbf7d0;
+      --status-ok-tx: #166534;
+      --status-err-bg: #fef2f2;
+      --status-err-bd: #fecaca;
+      --status-err-tx: #991b1b;
+      --sidebar-bg: #115e59;   /* 深みのある美しいフォレストグリーン */
     }
 
     [data-theme="dark"] {
-      --bg: #0b0d13; /* 深夜の静寂を思わせるディープブラック */
-      --surface: #121620; /* 鉱石のような墨色 */
-      --surface2: #191f2d;
-      --border: #2c354a; /* サイバーグリッドライン */
-      --text: #e2e8f0;
-      --text2: #718096;
-      --text-inv: #0b0d13;
-      --blue: #d4af37; /* 発光するゴールド・ブロンズ */
-      --green: #48bb78;
-      --danger: #f56565;
-      --success: #48bb78;
-      --warn: #ecc94b;
-      --grid: rgba(226, 232, 240, 0.05);
-      --tick: #718096;
-      --link-line: #2c354a;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      --scrollbar: #191f2d;
-      --modal-backdrop: rgba(5, 7, 10, 0.9);
-      --status-ok-bg: #11261a;
-      --status-ok-bd: #276749;
-      --status-ok-tx: #9ae6b4;
-      --status-err-bg: #2d1a1a;
-      --status-err-bd: #9b2c2c;
-      --status-err-tx: #feb2b2;
+      --bg: #090d16;
+      --surface: #111827;
+      --surface2: #1f2937;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --text2: #9ca3af;
+      --text-inv: #111827;
+      --blue: #2dd4bf;
+      --green: #34d399;
+      --danger: #f87171;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --grid: #1f293733;
+      --tick: #6b7280;
+      --link-line: #1f2937;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      --scrollbar: #1f2937;
+      --modal-backdrop: rgba(0, 0, 0, 0.6);
+      --status-ok-bg: #14532d;
+      --status-ok-bd: #166534;
+      --status-ok-tx: #bbf7d0;
+      --status-err-bg: #450a0a;
+      --status-err-bd: #991b1b;
+      --status-err-tx: #fecaca;
+      --sidebar-bg: #064e3b;
     }
 
     * {
@@ -82,17 +83,18 @@
     }
 
     body {
-      font-family: 'Georgia', 'Times New Roman', 'Hiragino Mincho ProN', 'MS Mincho', 'Segoe UI', 'Noto Sans JP', sans-serif;
+      /* 元の見やすく癖のないフォントスタックを完全維持 */
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
-      transition: background .4s ease, color .4s ease;
-      letter-spacing: 0.03em;
+      transition: background .3s, color .3s;
+      -webkit-font-smoothing: antialiased;
     }
 
     button, select, input, textarea {
-      font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      font-family: inherit;
     }
 
     ::-webkit-scrollbar {
@@ -101,8 +103,8 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 0px;
+      background: var(--scrollbar);
+      border-radius: 999px;
     }
 
     header {
@@ -110,182 +112,232 @@
       top: 0;
       z-index: 1000;
       background: var(--surface);
-      border-bottom: 2px solid var(--border);
-      padding: 20px 30px;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
       display: flex;
       align-items: center;
-      gap: 20px;
-      min-height: 80px;
-      transition: background .4s;
+      gap: 16px;
+      min-height: 74px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
 
     header h1 {
-      font-size: 1.4rem;
-      font-weight: 900;
+      font-size: 1.25rem;
+      font-weight: 700;
       color: var(--text);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      letter-spacing: -0.02em;
     }
 
     .sub {
-      font-size: .75rem;
+      font-size: .78rem;
       color: var(--text2);
       margin-top: 2px;
-      letter-spacing: 0.05em;
     }
 
     .badge {
-      background: transparent;
+      background: var(--surface2);
       color: var(--text);
       border: 1px solid var(--border);
-      font-size: .7rem;
-      padding: 3px 12px;
-      border-radius: var(--radius);
-      font-weight: bold;
-      text-transform: uppercase;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
     }
 
     .badge.g {
-      background: var(--blue);
-      color: var(--text-inv);
-      border-color: var(--blue);
+      background: rgba(16, 185, 129, 0.1);
+      color: #047857;
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    [data-theme="dark"] .badge.g {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border-color: transparent;
     }
 
     .hdr-right {
       margin-left: auto;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .theme-toggle {
       display: flex;
+      gap: 2px;
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 2px;
+      border-radius: 999px;
+      padding: 3px;
     }
 
     .theme-toggle span {
-      font-size: .72rem;
-      padding: 6px 14px;
-      border-radius: var(--radius);
-      transition: .3s;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+      transition: .2s;
       user-select: none;
       color: var(--text2);
       cursor: pointer;
-      font-weight: bold;
-      letter-spacing: 0.05em;
     }
 
     .theme-toggle span.on {
-      background: var(--border);
-      color: var(--surface);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     }
 
     .layout {
       display: flex;
       flex: 1;
       min-height: 0;
+      position: relative;
     }
 
-    .side {
-      width: 320px;
-      min-width: 320px;
+    /* アイコンサイドバー基盤 */
+    .sidebar-container {
+      display: flex;
       background: var(--surface);
       border-right: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    /* 固定アイコンバー */
+    .side-icon-bar {
+      width: 64px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 20px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1.25rem;
+    }
+
+    .icon-btn:hover, .icon-btn.active {
+      color: var(--text-inv);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .icon-btn.toggle-trigger {
+      background: rgba(0, 0, 0, 0.15);
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    /* スライド式フィルタコンテンツ */
+    .side {
+      width: 280px;
+      max-width: 280px;
+      background: var(--surface);
       overflow-y: auto;
-      padding: 24px 20px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      transition: background .4s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 1px solid var(--border);
+    }
+    
+    /* 閉じている時のスタイル */
+    .side.collapsed {
+      width: 0;
+      padding: 20px 0;
+      overflow: hidden;
+      border-left: none;
+      max-width: 0;
     }
 
     .side h3 {
-      font-size: .85rem;
+      font-size: .88rem;
+      font-weight: 700;
       color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      font-weight: 900;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 6px;
+      letter-spacing: 0.5px;
     }
 
     .fnote {
-      font-size: .7rem;
+      font-size: .75rem;
       color: var(--text2);
-      line-height: 1.6;
+      line-height: 1.5;
     }
 
     .fg {
-      background: transparent;
-      border: none;
-      border-bottom: 1px dashed var(--border);
-      border-radius: 0;
-      padding: 0 0 16px 0;
+      background: var(--surface2);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      padding: 12px;
+      transition: background .3s;
     }
 
     .fg label {
       display: block;
-      font-size: .72rem;
-      color: var(--text);
-      margin-bottom: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: .78rem;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 600;
     }
 
     .fg select,
     .fg input,
     .fg textarea {
       width: 100%;
-      background: var(--surface2);
+      background: var(--surface);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px 12px;
-      border-radius: var(--radius);
-      font-size: .8rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: .82rem;
       outline: none;
-      transition: all .3s;
+      transition: border-color .2s;
     }
 
     .fg select:focus,
     .fg input:focus,
     .fg textarea:focus {
       border-color: var(--blue);
-      background: var(--surface);
     }
 
     .btn {
-      padding: 12px 16px;
+      padding: 10px 16px;
       border: none;
-      border-radius: var(--radius);
+      border-radius: 8px;
       cursor: pointer;
-      font-size: .8rem;
-      font-weight: bold;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      transition: .3s;
+      font-size: .82rem;
+      font-weight: 600;
+      transition: .2s;
     }
 
     .btn2 {
-      background: transparent;
+      background: var(--surface);
       color: var(--text);
       border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
 
     .btn2:hover {
-      background: var(--border);
-      color: var(--surface);
+      background: var(--surface2);
     }
 
     .st {
-      padding: 12px;
-      border-radius: var(--radius);
-      font-size: .75rem;
-      font-weight: bold;
-      letter-spacing: 0.02em;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: .8rem;
+      font-weight: 500;
     }
 
     .st.ok {
@@ -303,50 +355,46 @@
     .main {
       flex: 1;
       overflow-y: auto;
-      padding: 30px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 24px;
     }
 
     .tabs {
       display: flex;
-      gap: 0px;
-      background: var(--surface);
+      gap: 6px;
+      background: transparent;
       padding: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
       flex-wrap: wrap;
-      box-shadow: var(--shadow);
-      transition: background .4s;
+      box-shadow: none;
     }
 
     .tab {
-      padding: 14px 20px;
+      padding: 10px 16px;
       border-radius: 0;
       cursor: pointer;
-      font-size: .8rem;
-      font-weight: bold;
+      font-size: .88rem;
+      font-weight: 600;
       color: var(--text2);
-      transition: .3s;
+      transition: .2s;
       border: none;
       background: transparent;
-      border-right: 1px solid var(--border);
-      letter-spacing: 0.05em;
-    }
-
-    .tab:last-child {
-      border-right: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
     }
 
     .tab:hover {
       color: var(--text);
-      background: var(--surface2);
+      background: transparent;
     }
 
     .tab.on {
-      background: var(--border);
-      color: var(--surface);
+      background: transparent;
+      color: var(--blue);
+      border-bottom: 2px solid var(--blue);
     }
 
     .tc {
@@ -363,20 +411,17 @@
       border-radius: var(--radius);
       padding: 24px;
       box-shadow: var(--shadow);
-      transition: background .4s;
+      transition: background .3s;
     }
 
     .card h2,
     .fc h2 {
-      font-size: 1.1rem;
-      margin-bottom: 20px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-weight: bold;
-      border-left: 3px solid var(--blue);
-      padding-left: 12px;
-      letter-spacing: 0.05em;
+      gap: 8px;
     }
 
     .g3 {
@@ -389,49 +434,36 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 24px;
-      text-align: left; /* ブルータリズム特有の非対称性 */
+      padding: 20px 24px;
+      text-align: left;
       box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .sc::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--border);
     }
 
     .sc .v {
-      font-size: 2.4rem;
-      font-weight: 900;
-      line-height: 1;
-      font-family: 'Georgia', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
 
     .sc .l {
-      font-size: .72rem;
+      font-size: .78rem;
+      font-weight: 600;
       color: var(--text2);
-      margin-top: 10px;
-      text-transform: uppercase;
-      font-weight: bold;
-      letter-spacing: 0.1em;
+      margin-top: 4px;
     }
 
     .sc.wb .v {
-      color: var(--text);
+      color: var(--blue);
     }
 
     .sc.ar .v {
-      color: var(--blue);
+      color: var(--green);
     }
 
     .cb {
       position: relative;
       width: 100%;
       height: 390px;
-      padding-top: 10px;
     }
 
     .cb.tall {
@@ -446,29 +478,27 @@
     .tag {
       display: inline-block;
       background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 5px 12px;
-      font-size: .72rem;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: .75rem;
+      font-weight: 500;
       color: var(--text);
-      margin: 4px;
-      font-weight: bold;
-      transition: all .2s;
+      margin: 3px;
     }
 
     .tag.hl {
-      background: var(--border);
-      color: var(--surface);
-      border-color: var(--border);
+      background: rgba(15, 118, 110, 0.08);
+      color: var(--blue);
+      font-weight: 600;
     }
 
     .pl {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       max-height: 560px;
       overflow-y: auto;
-      padding-right: 6px;
     }
 
     .pi {
@@ -479,20 +509,19 @@
       border-radius: var(--radius);
       padding: 16px;
       cursor: pointer;
-      transition: all .3s ease;
+      transition: border-color .2s, box-shadow .2s;
     }
 
     .pi:hover {
-      transform: translate(-2px, -2px);
-      box-shadow: 4px 4px 0px var(--border);
+      border-color: var(--blue);
+      box-shadow: var(--shadow);
     }
 
     .pi img {
-      width: 96px;
-      height: 96px;
+      width: 80px;
+      height: 80px;
       object-fit: cover;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
+      border-radius: 8px;
       flex-shrink: 0;
       background: var(--surface2);
     }
@@ -500,15 +529,12 @@
     .pi .info {
       flex: 1;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
     }
 
     .pi .sen {
-      font-size: .85rem;
-      line-height: 1.6;
-      font-family: inherit;
+      font-size: .88rem;
+      line-height: 1.5;
+      color: var(--text);
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -516,28 +542,25 @@
     }
 
     .pi .meta {
-      font-size: .7rem;
+      font-size: .75rem;
       color: var(--text2);
       margin-top: 8px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
-      font-weight: bold;
-      text-transform: uppercase;
     }
 
     .sb {
-      height: 4px;
+      height: 6px;
       background: var(--surface2);
-      border-radius: 0px;
+      border-radius: 999px;
       overflow: hidden;
       min-width: 60px;
-      border: 1px solid var(--border);
     }
 
     .sb .f {
       height: 100%;
-      border-radius: 0px;
+      border-radius: 999px;
     }
 
     .mo {
@@ -558,45 +581,40 @@
 
     .md {
       background: var(--surface);
-      border: 2px solid var(--border);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      max-width: 840px;
+      max-width: 780px;
       width: 100%;
       max-height: 88vh;
       overflow-y: auto;
-      padding: 30px;
+      padding: 28px;
       position: relative;
-      box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
     }
 
     .md .x {
       position: absolute;
       top: 16px;
       right: 20px;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       cursor: pointer;
-      color: var(--text);
+      color: var(--text2);
       background: none;
       border: none;
-      line-height: 1;
-      transition: transform .2s;
     }
 
     .md .x:hover {
-      transform: scale(1.1);
+      color: var(--text);
     }
 
     .md h2 {
       margin-bottom: 20px;
-      font-size: 1.3rem;
-      font-weight: 900;
-      border-left: 4px solid var(--blue);
-      padding-left: 12px;
+      font-size: 1.2rem;
+      font-weight: 700;
     }
 
     .md img {
       max-width: 100%;
-      border: 1px solid var(--border);
       border-radius: var(--radius);
       margin-bottom: 16px;
     }
@@ -604,28 +622,26 @@
     .md table {
       width: 100%;
       border-collapse: collapse;
-      font-size: .82rem;
-      margin-bottom: 20px;
+      font-size: .85rem;
     }
 
     .md th,
     .md td {
-      padding: 12px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border);
       text-align: left;
     }
 
     .md th {
-      color: var(--text);
-      font-weight: 700;
+      color: var(--text2);
+      font-weight: 600;
       background: var(--surface2);
-      width: 25%;
     }
 
     .at {
       width: 100%;
       border-collapse: collapse;
-      font-size: .8rem;
+      font-size: .85rem;
     }
 
     .at th,
@@ -636,92 +652,82 @@
     }
 
     .at th {
-      color: var(--text);
-      font-weight: 700;
-      font-size: .72rem;
+      color: var(--text2);
+      font-weight: 600;
+      font-size: .78rem;
       text-transform: uppercase;
       background: var(--surface2);
-      letter-spacing: 0.05em;
     }
 
     .at tr {
       cursor: pointer;
-      transition: .2s;
+      transition: .15s;
     }
 
     .at tr:hover {
       background: var(--surface2);
     }
 
-    .ah { color: var(--success); font-weight: bold; }
-    .al { color: var(--danger); font-weight: bold; }
+    .ah { color: var(--success); font-weight: 600; }
+    .al { color: var(--danger); font-weight: 600; }
 
     .tw {
       position: relative;
       cursor: help;
-      border-bottom: 1px dashed var(--border);
+      border-bottom: 1px dotted var(--text2);
     }
 
     .tw:hover::after {
       content: attr(data-tip);
       position: absolute;
-      bottom: 125%;
+      bottom: 120%;
       left: 50%;
       transform: translateX(-50%);
       background: var(--surface);
       color: var(--text);
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      font-size: .72rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: .75rem;
       white-space: pre-line;
-      width: 240px;
+      width: 220px;
       z-index: 100;
       border: 1px solid var(--border);
-      box-shadow: 4px 4px 0px var(--border);
+      box-shadow: var(--shadow);
     }
 
     .rt {
       display: flex;
-      gap: 0px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      width: fit-content;
-      overflow: hidden;
+      gap: 4px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
     .rt button {
-      padding: 6px 14px;
-      border: none;
-      border-right: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text2);
       cursor: pointer;
-      font-size: .72rem;
-      font-weight: bold;
-      transition: .2s;
-    }
-
-    .rt button:last-child {
-      border-right: none;
+      font-size: .8rem;
+      font-weight: 500;
     }
 
     .rt button.on {
-      background: var(--border);
-      color: var(--surface);
+      background: var(--blue);
+      color: var(--text-inv);
+      border-color: var(--blue);
     }
 
     .slg {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding-top: 4px;
+      gap: 8px;
     }
 
     .slg input[type="range"] {
       flex: 1;
-      accent-color: var(--text);
-      cursor: pointer;
+      accent-color: var(--blue);
     }
 
     .slg .v {
@@ -729,7 +735,7 @@
       color: var(--blue);
       min-width: 24px;
       text-align: center;
-      font-weight: 900;
+      font-weight: 700;
     }
 
     .fc {
@@ -741,14 +747,13 @@
     }
 
     .fc h2 {
-      margin: 16px 16px;
+      margin: 12px 16px;
     }
 
     #map {
       width: 100%;
       height: calc(100vh - 160px);
       border-radius: var(--radius);
-      border-top: 1px solid var(--border);
       z-index: 1;
     }
 
@@ -768,12 +773,32 @@
       .layout {
         flex-direction: column;
       }
-      .side {
+      .sidebar-container {
+        flex-direction: row;
         width: 100%;
-        min-width: unset;
-        max-height: 42vh;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
+      }
+      .side-icon-bar {
+        width: 100%;
+        height: 54px;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0 16px;
+      }
+      .icon-btn.toggle-trigger {
+        margin-bottom: 0;
+      }
+      .side {
+        position: absolute;
+        top: 54px;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 50vh;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      }
+      .side.collapsed {
+        max-height: 0;
+        padding: 0;
       }
       .g3 {
         grid-template-columns: 1fr;
@@ -789,37 +814,36 @@
     /* Multi-select dropdown */
     .ms-wrap { position: relative; }
     .ms-toggle {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); padding: 10px 12px; border-radius: var(--radius); font-size: .8rem;
-      outline: none; cursor: pointer; text-align: left; font-weight: bold;
-      transition: all .3s; font: inherit;
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: .82rem;
+      outline: none; cursor: pointer; text-align: left;
+      transition: border-color .2s; font: inherit;
     }
-    .ms-toggle:hover { background: var(--surface); border-color: var(--blue); }
+    .ms-toggle:hover { border-color: var(--blue); }
     .ms-dropdown {
       display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-      max-height: 240px; overflow-y: auto; box-shadow: 4px 4px 0px var(--border); margin-top: 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      max-height: 240px; overflow-y: auto; box-shadow: var(--shadow); margin-top: 4px;
     }
     .ms-dropdown.open { display: block; }
     .ms-option {
-      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-      font-size: .78rem; cursor: pointer; transition: background .15s; user-select: none; color: var(--text);
-      font-weight: bold;
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      font-size: .82rem; cursor: pointer; transition: background .15s; user-select: none; color: var(--text);
     }
     .ms-option:hover { background: var(--surface2); }
     .ms-option input[type="checkbox"] { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
 
     /* Pagination */
-    .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 24px; flex-wrap: wrap; }
+    .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 16px; flex-wrap: wrap; }
     .pager button {
-      padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--border);
-      background: var(--surface); color: var(--text); cursor: pointer; font-size: .75rem;
-      font-weight: bold; transition: .2s;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer; font-size: .8rem;
+      font-weight: 500; transition: .2s;
     }
-    .pager button:hover { background: var(--surface2); }
-    .pager button.on { background: var(--border); color: var(--surface); }
-    .pager button:disabled { opacity: .3; cursor: default; }
-    .pager .pinfo { font-size: .76rem; color: var(--text2); padding: 0 4px; }
+    .pager button:hover { border-color: var(--blue); color: var(--blue); }
+    .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
+    .pager button:disabled { opacity: .4; cursor: default; }
+    .pager .pinfo { font-size: .78rem; color: var(--text2); }
   </style>
 </head>
 <body>
@@ -839,42 +863,54 @@
   </header>
 
   <div class="layout">
-    <aside class="side">
-      <h3>🔍 フィルター</h3>
-      <div class="fnote">※ フィルタは選択時に自動反映されます</div>
-      <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
+    <div class="sidebar-container">
+      <div class="side-icon-bar">
+        <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉">🔍</button>
+        <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();">📊</button>
+        <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();">🗺️</button>
+        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();">🔬</button>
+        <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();">📝</button>
+        <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();">📍</button>
+        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();">🔗</button>
+      </div>
+      
+      <aside class="side" id="filterPanel">
+        <h3>🔍 フィルター詳細</h3>
+        <div class="fnote">※ フィルタは選択時に自動反映されます</div>
+        <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
 
-      <div class="fg"><label>イベント種別</label><div class="ms-wrap" id="fT"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>性別</label><div class="ms-wrap" id="fG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>年代</label><div class="ms-wrap" id="fA"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>エリアグループ</label><div class="ms-wrap" id="fAG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>エリア</label><div class="ms-wrap" id="fAR"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
-      <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
-      <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
-      <div class="fg">
-        <label>除外する投稿ID</label>
-        <textarea id="fExclude" placeholder="例: art_001, art_002&#10;カンマ・改行・スペース区切りで入力"></textarea>
-        <div class="fnote" style="margin-top:4px">※ artwork_id をカンマ・改行・スペース区切りで指定すると、該当投稿が除外されます</div>
-      </div>
-      <button class="btn btn2" id="rb">🔄 リセット</button>
-      <div class="fg">
-        <label>エリア分析：最低投稿数</label>
-        <div class="slg">
-          <input type="range" id="mp" min="1" max="20" value="1">
-          <span class="v" id="mpv">1</span>
+        <div class="fg"><label>イベント種別</label><div class="ms-wrap" id="fT"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>性別</label><div class="ms-wrap" id="fG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>年代</label><div class="ms-wrap" id="fA"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>エリアグループ</label><div class="ms-wrap" id="fAG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>エリア</label><div class="ms-wrap" id="fAR"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
+        <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
+        <div class="fg">
+          <label>除外する投稿ID</label>
+          <textarea id="fExclude" placeholder="例: art_001, art_002&#10;カンマ・改行・スペース区切りで入力"></textarea>
+          <div class="fnote" style="margin-top:4px">※ artwork_id をカンマ・改行・スペース区切りで指定すると、該当投稿が除外されます</div>
         </div>
-      </div>
-    </aside>
+        <button class="btn btn2" id="rb">🔄 リセット</button>
+        <div class="fg">
+          <label>エリア分析：最低投稿数</label>
+          <div class="slg">
+            <input type="range" id="mp" min="1" max="20" value="1">
+            <span class="v" id="mpv">1</span>
+          </div>
+        </div>
+      </aside>
+    </div>
 
     <main class="main">
       <div class="tabs">
-        <button class="tab on" data-t="ov">📊 概要</button>
-        <button class="tab" data-t="ar">🗺️ エリア分析</button>
-        <button class="tab" data-t="an">🔬 特異スコア</button>
-        <button class="tab" data-t="po">📝 投稿一覧</button>
-        <button class="tab" data-t="ma">📍 地図</button>
-        <button class="tab" data-t="nw">🔗 共起ネットワーク</button>
+        <button class="tab on" data-t="ov">概要</button>
+        <button class="tab" data-t="ar">エリア分析</button>
+        <button class="tab" data-t="an">特異スコア</button>
+        <button class="tab" data-t="po">投稿一覧</button>
+        <button class="tab" data-t="ma">地図</button>
+        <button class="tab" data-t="nw">共起ネットワーク</button>
       </div>
 
       <div class="tc on" id="t-ov">
@@ -1097,6 +1133,29 @@
       }
 
       function bindEvents() {
+        // トグル式フィルタパネルの開閉制御
+        $('filterToggleBtn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          const panel = $('filterPanel');
+          panel.classList.toggle('collapsed');
+          this.classList.toggle('active');
+          
+          // 地図やチャートのサイズ再計算トリガー
+          setTimeout(() => {
+            if (state.activeTab === 'ma' && state.map) state.map.invalidateSize();
+            if (state.activeTab === 'nw') renderNetwork();
+          }, 320);
+        });
+
+        // 各アイコンクリック時に対応するタブのアクティブ感を出すための補助
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+          tab.addEventListener('click', function() {
+            const icons = document.querySelectorAll('.side-icon-bar .icon-btn:not(.toggle-trigger)');
+            icons.forEach(i => i.classList.remove('active'));
+            if(icons[index]) icons[index].classList.add('active');
+          });
+        });
+
         // Multi-select toggle
         document.querySelectorAll('.ms-toggle').forEach(btn => {
           btn.addEventListener('click', function(e) {
@@ -1228,7 +1287,6 @@
         renderActiveTab();
       }
 
-      // 表示されているタブのみに限定してレンダリングを実行（パフォーマンス向上）
       function renderActiveTab() {
         switch(state.activeTab) {
           case 'ov':
@@ -1297,7 +1355,7 @@
               label: '投稿数',
               data: labels.map(l => categoryStats[l].count),
               backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
-              borderRadius: 0
+              borderRadius: 4
             }]
           },
           options: {
@@ -1351,7 +1409,7 @@
               label: '平均スコア',
               data: averages,
               backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
-              borderRadius: 0
+              borderRadius: 4
             }]
           },
           options: {
@@ -1437,7 +1495,7 @@
                 return stats && stats.count ? Math.round((stats.total / stats.count) * 10) / 10 : 0;
               }),
               backgroundColor: config.area[idx % config.area.length],
-              borderRadius: 0
+              borderRadius: 4
             }))
           },
           options: {
@@ -1451,7 +1509,6 @@
           }
         });
 
-        // エリア分析: 投稿一覧
         renderPaginatedList('arpls', 'arpgr', 'arps', state.uniquePosts, 'arPage');
       }
 
@@ -1670,13 +1727,13 @@
           const marker = L.circleMarker([lat, lng], {
             radius: 8,
             fillColor: getThemeValue('--blue'),
-            color: getThemeValue('--border'),
+            color: '#fff',
             weight: 2,
             fillOpacity: 0.85
           });
 
           marker.bindPopup(`
-            <div style="max-width:260px;font-size:.8rem;font-family:sans-serif;">
+            <div style="max-width:260px;font-size:.8rem">
               <b>${top1Data.category || ''}</b> (${top1Data.score || '-'})<br>
               ${(p.sentence || '').slice(0, 100)}…
             </div>
@@ -1697,7 +1754,7 @@
             state.map.fitBounds(validCoords, { padding: [30, 30] });
           }
         } else {
-          state.map.setView([35.68, 139.76], 11); // 東京駅周辺をデフォルト値に設定
+          state.map.setView([35.68, 139.76], 11);
         }
       }
 
@@ -1792,7 +1849,7 @@
           .attr('r', d => radiusScale(d.count))
           .attr('fill', (d, i) => config.node[i % config.node.length])
           .attr('stroke', config.nodeStroke)
-          .attr('stroke-width', 2)
+          .attr('stroke-width', 2.5)
           .attr('opacity', 0.95);
 
         nodeElements.append('text')
@@ -1802,7 +1859,6 @@
           .attr('fill', config.nodeText)
           .attr('font-size', d => Math.max(9, Math.min(14, radiusScale(d.count))))
           .attr('font-weight', 600)
-          .attr('font-family', 'sans-serif')
           .attr('pointer-events', 'none');
 
         simulation.on('tick', () => {
@@ -1832,7 +1888,7 @@
         }
 
         html += `
-          <p style="margin-bottom:20px; line-height:1.7; font-size:0.95rem;">${basePost.sentence || ''}</p>
+          <p style="margin-bottom:12px;line-height:1.65">${basePost.sentence || ''}</p>
           <table>
             <tr><th>性別</th><td>${basePost.gender || '-'}</td></tr>
             <tr><th>年代</th><td>${basePost.age_group || '-'} (${basePost.age_group_half || '-'})</td></tr>
@@ -1840,7 +1896,7 @@
             <tr><th>エリア</th><td>${basePost.nearest_AreaGroup || ''} / ${basePost.nearest_Area || ''}</td></tr>
             <tr><th>座標</th><td>${basePost.latitude || '-'}, ${basePost.longitude || '-'}</td></tr>
           </table>
-          <h3 style="margin:24px 0 12px; font-size:1rem; font-weight:bold; text-transform:uppercase; letter-spacing:0.05em;">WB指標 Top1〜3</h3>
+          <h3 style="margin:16px 0 8px;font-size:.9rem">WB指標 Top1〜3</h3>
           <table>
             <tr><th>順位</th><th>指標</th><th>スコア</th><th>根拠</th></tr>
         `;
@@ -1848,7 +1904,7 @@
         rankedList.forEach(r => {
           const scoreVal = (r.score !== '' && r.score !== undefined) ? r.score : '-';
           const scorePercent = scoreVal !== '-' ? scoreVal : 0;
-          const barColor = 'var(--blue)';
+          const barColor = scorePercent >= 70 ? 'var(--success)' : scorePercent >= 40 ? 'var(--warn)' : 'var(--danger)';
 
           html += `
             <tr>
@@ -1856,7 +1912,7 @@
               <td><span class="tw" data-tip="${window.CATEGORY_DESCRIPTIONS[r.category] || ''}">${r.category || '-'}</span></td>
               <td>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-family:Georgia; font-weight:bold; min-width:24px">${scoreVal}</span>
+                  ${scoreVal}
                   <div class="sb" style="width:80px">
                     <div class="f" style="width:${scorePercent}%;background:${barColor}"></div>
                   </div>
@@ -1876,7 +1932,6 @@
         $('mov').classList.remove('show');
       }
 
-      // 起動
       loadData();
     })();
   </script>
