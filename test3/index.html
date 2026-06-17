@@ -10,6 +10,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="./config.js"></script>
+  <script src="./tooltip.js"></script>
 
   <style>
     :root {
@@ -875,6 +876,40 @@
     .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
     .pager button:disabled { opacity: .4; cursor: default; }
     .pager .pinfo { font-size: .78rem; color: var(--text2); }
+  
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      color: var(--text2);
+      position: relative;
+      margin-left: 2px;
+      transition: color 0.15s;
+    }
+    .info-icon:hover {
+      color: var(--blue);
+    }
+    .info-icon:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.55;
+      white-space: normal;
+      width: 280px;
+      z-index: 1500;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -899,10 +934,10 @@
         <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
         <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
         <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
-        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+        
         <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
         <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
-        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button><button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
       </div>
       
       <aside class="side" id="filterPanel">
@@ -941,10 +976,10 @@
       <div class="tabs">
         <button class="tab on" data-t="ov">概要</button>
         <button class="tab" data-t="ar">エリア分析</button>
-        <button class="tab" data-t="an">特異スコア</button>
+        
         <button class="tab" data-t="po">投稿一覧</button>
         <button class="tab" data-t="ma">地図</button>
-        <button class="tab" data-t="nw">共起ネットワーク</button>
+        <button class="tab" data-t="nw">共起ネットワーク</button><button class="tab" data-t="an">特異スコア</button>
       </div>
 
       <div class="tc on" id="t-ov">
@@ -954,7 +989,7 @@
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             WB指標別スコア分布
-          </h2>
+           <span class="info-icon" data-tooltip-key="score_dist"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="rt" id="rtg">
             <button class="on" data-r="top1">Top1のみ</button>
             <button data-r="top2">Top2まで</button>
@@ -968,7 +1003,7 @@
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             指標別 平均スコア
-          </h2>
+           <span class="info-icon" data-tooltip-key="avg_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="cb"><canvas id="c2"></canvas></div>
         </div>
 
@@ -976,7 +1011,7 @@
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
             指標別キーワード
-          </h2>
+           <span class="info-icon" data-tooltip-key="keywords"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div id="rts"></div>
         </div>
       </div>
@@ -986,7 +1021,7 @@
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             エリア比較
-          </h2>
+           <span class="info-icon" data-tooltip-key="area_compare"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。（Top1〜20全ランク対象）</p>
           <div class="cb tall"><canvas id="c3"></canvas></div>
         </div>
@@ -994,18 +1029,50 @@
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             投稿一覧 <span id="arps" style="font-size:.75rem;color:var(--text2)"></span>
-          </h2>
+           <span class="info-icon" data-tooltip-key="post_list"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="pl" id="arpls"></div>
           <div class="pager" id="arpgr"></div>
         </div>
       </div>
 
-      <div class="tc" id="t-an">
+      
+
+      <div class="tc" id="t-po">
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            投稿一覧 <span id="ps" style="font-size:.75rem;color:var(--text2)"></span>
+           <span class="info-icon" data-tooltip-key="post_list"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <div class="pl" id="pls"></div>
+          <div class="pager" id="ppgr"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-ma">
+        <div class="fc">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            投稿位置マップ
+           <span class="info-icon" data-tooltip-key="map_view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <div id="map"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-nw">
+        <div class="fc">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            キーワード共起ネットワーク
+           <span class="info-icon" data-tooltip-key="network_view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <svg id="network"></svg>
+        </div>
+      </div>
+<div class="tc" id="t-an">
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             特異スコア検出
-          </h2>
+           <span class="info-icon" data-tooltip-key="anomaly_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均（Top1〜20全ランク対象）。行クリックで該当投稿を表示。</p>
           <div style="overflow-x:auto">
             <table class="at" id="atb">
@@ -1029,37 +1096,6 @@
             該当投稿
           </h2>
           <div class="pl" id="apl"></div>
-        </div>
-      </div>
-
-      <div class="tc" id="t-po">
-        <div class="card">
-          <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            投稿一覧 <span id="ps" style="font-size:.75rem;color:var(--text2)"></span>
-          </h2>
-          <div class="pl" id="pls"></div>
-          <div class="pager" id="ppgr"></div>
-        </div>
-      </div>
-
-      <div class="tc" id="t-ma">
-        <div class="fc">
-          <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            投稿位置マップ
-          </h2>
-          <div id="map"></div>
-        </div>
-      </div>
-
-      <div class="tc" id="t-nw">
-        <div class="fc">
-          <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            キーワード共起ネットワーク
-          </h2>
-          <svg id="network"></svg>
         </div>
       </div>
     </main>
@@ -2012,6 +2048,15 @@
         $('mov').classList.remove('show');
       }
 
+      function initTooltips() {
+        if (!window.TOOLTIP_DESCRIPTIONS) return;
+        document.querySelectorAll('.info-icon[data-tooltip-key]').forEach(el => {
+          const key = el.dataset.tooltipKey;
+          const tip = window.TOOLTIP_DESCRIPTIONS[key];
+          if (tip) el.setAttribute('data-tip', tip);
+        });
+      }
+      initTooltips();
       loadData();
     })();
   </script>
