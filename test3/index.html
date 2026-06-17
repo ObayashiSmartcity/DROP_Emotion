@@ -163,6 +163,21 @@
       gap: 12px;
     }
 
+    .company-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+    }
+
+    .company-logo {
+      display: block;
+      height: 28px;
+      width: auto;
+      max-width: 180px;
+      object-fit: contain;
+    }
+
     .theme-toggle {
       display: flex;
       gap: 2px;
@@ -921,6 +936,9 @@
     <span class="badge" id="pc">0 投稿</span>
     <span class="badge g" id="fc">0 表示中</span>
     <div class="hdr-right">
+      <div class="company-logo-wrap">
+        <img id="companyLogo" class="company-logo" src="./04_obayashi_c.png" alt="会社ロゴ">
+      </div>
       <div class="theme-toggle">
         <span id="bl" class="on">☀️ Light</span>
         <span id="bd">🌙 Dark</span>
@@ -1158,6 +1176,8 @@
         document.documentElement.setAttribute('data-theme', t);
         $('bl').className = t === 'light' ? 'on' : '';
         $('bd').className = t === 'dark' ? 'on' : '';
+        const logoEl = $('companyLogo');
+        if (logoEl) logoEl.src = t === 'dark' ? './04_obayashi_o.png' : './04_obayashi_c.png';
         localStorage.setItem('drops-theme', t);
         if (state.raw.length) renderActiveTab();
       }
