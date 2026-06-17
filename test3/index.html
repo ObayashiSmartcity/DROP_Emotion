@@ -1352,7 +1352,7 @@
             if (r === 'top1') state.currentRanks = ['top1'];
             else if (r === 'top2') state.currentRanks = ['top1', 'top2'];
             else if (r === 'top3') state.currentRanks = ['top1', 'top2', 'top3'];
-            else state.currentRanks = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            else state.currentRanks = Array.from({length: 20}, (_, i) => 'top' + (i + 1));
             renderDistributionChart();
           });
         document.querySelectorAll('#rtg2 button').forEach(btn => {
@@ -1363,7 +1363,7 @@
             if (r === 'top1') state.currentRanksAvg = ['top1'];
             else if (r === 'top2') state.currentRanksAvg = ['top1', 'top2'];
             else if (r === 'top3') state.currentRanksAvg = ['top1', 'top2', 'top3'];
-            else state.currentRanksAvg = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            else state.currentRanksAvg = Array.from({length: 20}, (_, i) => 'top' + (i + 1));
             renderAverageScoreChart();
           });
         });
@@ -1375,7 +1375,7 @@
             if (r === 'top1') state.currentRanksKw = ['top1'];
             else if (r === 'top2') state.currentRanksKw = ['top1', 'top2'];
             else if (r === 'top3') state.currentRanksKw = ['top1', 'top2', 'top3'];
-            else state.currentRanksKw = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            else state.currentRanksKw = Array.from({length: 20}, (_, i) => 'top' + (i + 1));
             renderKeywords();
           });
         });
