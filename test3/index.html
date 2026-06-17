@@ -877,39 +877,39 @@
     .pager button:disabled { opacity: .4; cursor: default; }
     .pager .pinfo { font-size: .78rem; color: var(--text2); }
   
-    .info-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: help;
-      color: var(--text2);
-      position: relative;
-      margin-left: 2px;
-      transition: color 0.15s;
-    }
-    .info-icon:hover {
-      color: var(--blue);
-    }
-    .info-icon:hover::after {
-      content: attr(data-tip);
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--surface);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 400;
-      line-height: 1.55;
-      white-space: normal;
-      width: 280px;
-      z-index: 1500;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      pointer-events: none;
-    }
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  color: var(--text2);
+  position: relative;
+  margin-left: 2px;
+  transition: color 0.15s;
+}
+.info-icon:hover {
+  color: var(--blue);
+}
+.info-icon:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: normal;
+  width: 280px;
+  z-index: 1500;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
   </style>
 </head>
 <body>
@@ -976,14 +976,22 @@
       <div class="tabs">
         <button class="tab on" data-t="ov">概要</button>
         <button class="tab" data-t="ar">エリア分析</button>
-        
         <button class="tab" data-t="po">投稿一覧</button>
         <button class="tab" data-t="ma">地図</button>
-        <button class="tab" data-t="nw">共起ネットワーク</button><button class="tab" data-t="an">特異スコア</button>
+        <button class="tab" data-t="nw">共起ネットワーク</button>
+        <button class="tab" data-t="an">特異スコア</button>
       </div>
 
       <div class="tc on" id="t-ov">
         <div class="g3" id="scs"></div>
+
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            指標別 平均スコア
+           <span class="info-icon" data-tooltip-key="avg_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <div class="cb"><canvas id="c2"></canvas></div>
+        </div>
 
         <div class="card">
           <h2>
@@ -997,14 +1005,6 @@
             <button data-r="all">すべて</button>
           </div>
           <div class="cb"><canvas id="c1"></canvas></div>
-        </div>
-
-        <div class="card">
-          <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            指標別 平均スコア
-           <span class="info-icon" data-tooltip-key="avg_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
-          <div class="cb"><canvas id="c2"></canvas></div>
         </div>
 
         <div class="card">
@@ -1513,13 +1513,12 @@
             }]
           },
           options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
-              y: { ticks: { color: tickColor }, grid: { display: false } }
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } }
             }
           }
         });
@@ -2048,16 +2047,17 @@
         $('mov').classList.remove('show');
       }
 
-      function initTooltips() {
-        if (!window.TOOLTIP_DESCRIPTIONS) return;
-        document.querySelectorAll('.info-icon[data-tooltip-key]').forEach(el => {
-          const key = el.dataset.tooltipKey;
-          const tip = window.TOOLTIP_DESCRIPTIONS[key];
-          if (tip) el.setAttribute('data-tip', tip);
-        });
-      }
-      initTooltips();
-      loadData();
+      
+function initTooltips() {
+  if (!window.TOOLTIP_DESCRIPTIONS) return;
+  document.querySelectorAll('.info-icon[data-tooltip-key]').forEach(el => {
+    const key = el.dataset.tooltipKey;
+    const tip = window.TOOLTIP_DESCRIPTIONS[key];
+    if (tip) el.setAttribute('data-tip', tip);
+  });
+}
+initTooltips();
+loadData();
     })();
   </script>
 </body>
