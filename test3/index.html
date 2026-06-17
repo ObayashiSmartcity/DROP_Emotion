@@ -1535,8 +1535,16 @@
           }
         });
 
-        const labels = Object.keys(categoryStats).sort();
-        const averages = labels.map(l => categoryStats[l].count ? Math.round((categoryStats[l].total / categoryStats[l].count) * 10) / 10 : 0);
+        const entries = Object.entries(categoryStats).map(([cat, v]) => {
+        const avg = v.count ? Math.round((v.total / v.count) * 10) / 10 : 0;
+        return { cat, avg };
+        });
+
+        entries.sort((a, b) => b.avg - a.avg);  // ← 降順
+
+        const labels = entries.map(e => e.cat);
+        const averages = entries.map(e => e.avg);
+
 
         if (state.charts.ch2) state.charts.ch2.destroy();
         state.charts.ch2 = new Chart($('c2').getContext('2d'), {
