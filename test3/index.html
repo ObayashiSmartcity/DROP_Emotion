@@ -1,1 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DROPs分析ダッシュボード - 感性の価値化</title>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="./config.js"></script>
+  <script src="./tooltip.js"></script>
+
+  <style>
+    :root {
+      --radius: 12px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text2: #64748b;
+      --text-inv: #ffffff;
+      --blue: #2563eb;        /* 洗練されたロイヤルブルー */
+      --green: #10b981;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --grid: #f1f5f9;
+      --tick: #94a3b8;
+      --link-line: #cbd5e1;
+      --shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+      --scrollbar: #e2e8f0;
+      --modal-backdrop: rgba(15, 23, 42, 0.3);
+      --status-ok-bg: #f0fdf4;
+      --status-ok-bd: #bbf7d0;
+      --status-ok-tx: #166534;
+      --status-err-bg: #fef2f2;
+      --status-err-bd: #fecaca;
+      --status-err-tx: #991b1b;
+      --sidebar-bg: #1e3a8a;   /* 深みのあるディープブルー */
+    }
+
+    [data-theme="dark"] {
+      --bg: #090d16;
+      --surface: #111827;
+      --surface2: #1f2937;
+      --border: #1f2937;
+      --text: #f3f4f6;
+      --text2: #9ca3af;
+      --text-inv: #111827;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --danger: #f87171;
+      --success: #34d399;
+      --warn: #fbbf24;
+      --grid: #1f293733;
+      --tick: #6b7280;
+      --link-line: #1f2937;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      --scrollbar: #1f2937;
+      --modal-backdrop: rgba(0, 0, 0, 0.6);
+      --status-ok-bg: #14532d;
+      --status-ok-bd: #166534;
+      --status-ok-tx: #bbf7d0;
+      --status-err-bg: #450a0a;
+      --status-err-bd: #991b1b;
+      --status-err-tx: #fecaca;
+      --sidebar-bg: #172554;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      transition: background .3s, color .3s;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, select, input, textarea {
+      font-family: inherit;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar);
+      border-radius: 999px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 74px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .sub {
+      font-size: .78rem;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+
+    .badge {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .badge.g {
+      background: rgba(16, 185, 129, 0.1);
+      color: #047857;
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    [data-theme="dark"] .badge.g {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border-color: transparent;
+    }
+
+    .hdr-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px;
+    }
+
+    .theme-toggle span {
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+      transition: .2s;
+      user-select: none;
+      color: var(--text2);
+      cursor: pointer;
+    }
+
+    .theme-toggle span.on {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* アイコンサイドバー基盤 */
+    .sidebar-container {
+      display: flex;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      z-index: 10;
+    }
+
+    /* 固定アイコンバー */
+    .side-icon-bar {
+      width: 64px;
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+      gap: 20px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1.25rem;
+    }
+
+    .icon-btn:hover, .icon-btn.active {
+      color: var(--text-inv);
+      background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .icon-btn.toggle-trigger {
+      background: rgba(0, 0, 0, 0.15);
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    /* スライド式フィルタコンテンツ */
+    .side {
+      width: 280px;
+      max-width: 280px;
+      background: var(--surface);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 1px solid var(--border);
+    }
+    
+    .side.collapsed {
+      width: 0;
+      padding: 20px 0;
+      overflow: hidden;
+      border-left: none;
+      max-width: 0;
+    }
+
+    .side h3 {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fnote {
+      font-size: .75rem;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    .fg {
+      background: var(--surface2);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      padding: 12px;
+      transition: background .3s;
+    }
+
+    .fg label {
+      display: block;
+      font-size: .78rem;
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .fg select,
+    .fg input,
+    .fg textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: .82rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .fg select:focus,
+    .fg input:focus,
+    .fg textarea:focus {
+      border-color: var(--blue);
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .btn2 {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .btn2:hover {
+      background: var(--surface2);
+    }
+
+    .st {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: .8rem;
+      font-weight: 500;
+    }
+
+    .st.ok {
+      background: var(--status-ok-bg);
+      border: 1px solid var(--status-ok-bd);
+      color: var(--status-ok-tx);
+    }
+
+    .st.er {
+      background: var(--status-err-bg);
+      border: 1px solid var(--status-err-bd);
+      color: var(--status-err-tx);
+    }
+
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: transparent;
+      padding: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      flex-wrap: wrap;
+      box-shadow: none;
+    }
+
+    .tab {
+      padding: 10px 16px;
+      border-radius: 0;
+      cursor: pointer;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--text2);
+      transition: .2s;
+      border: none;
+      background: transparent;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .tab:hover {
+      color: var(--text);
+      background: transparent;
+    }
+
+    .tab.on {
+      background: transparent;
+      color: var(--blue);
+      border-bottom: 2px solid var(--blue);
+    }
+
+    .tc {
+      display: none;
+    }
+
+    .tc.on {
+      display: block;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      transition: background .3s;
+    }
+
+    .card h2,
+    .fc h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .card h2 svg,
+    .fc h2 svg,
+    .side h3 svg {
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    /* タイトル横ツールチップ用デザイン */
+    .title-tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: help;
+      color: var(--text2);
+      transition: color 0.2s;
+    }
+    .title-tooltip:hover {
+      color: var(--blue);
+    }
+    .title-tooltip:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: .78rem;
+      font-weight: 500;
+      line-height: 1.5;
+      white-space: pre-line;
+      width: 260px;
+      z-index: 1100;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+
+    .sc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      text-align: left;
+      box-shadow: var(--shadow);
+    }
+
+    .sc .v {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .sc .l {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+
+    .sc.wb .v {
+      color: var(--blue);
+    }
+
+    .sc.ar .v {
+      color: var(--green);
+    }
+
+    .cb {
+      position: relative;
+      width: 100%;
+      height: 390px;
+    }
+
+    .cb.tall {
+      height: 520px;
+    }
+
+    .cb canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .tag {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: .75rem;
+      font-weight: 500;
+      color: var(--text);
+      margin: 3px;
+    }
+
+    .tag.hl {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .pl {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 560px;
+      overflow-y: auto;
+    }
+
+    .pi {
+      display: flex;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .pi:hover {
+      border-color: var(--blue);
+      box-shadow: var(--shadow);
+    }
+
+    .pi img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+      background: var(--surface2);
+    }
+
+    .pi .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pi .sen {
+      font-size: .88rem;
+      line-height: 1.5;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .pi .meta {
+      font-size: .75rem;
+      color: var(--text2);
+      margin-top: 8px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pi .meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pi .meta svg {
+      color: var(--text2);
+    }
+
+    .sb {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 999px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .sb .f {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .mo {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-backdrop);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .mo.show {
+      display: flex;
+    }
+
+    .md {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 780px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+    }
+
+    .md .x {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text2);
+      background: none;
+      border: none;
+    }
+
+    .md .x:hover {
+      color: var(--text);
+    }
+
+    .md h2 {
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    .md h2 svg {
+      color: var(--text);
+    }
+
+    .md img {
+      max-width: 100%;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+
+    .md table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    .md th,
+    .md td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .md th {
+      color: var(--text2);
+      font-weight: 600;
+      background: var(--surface2);
+    }
+
+    .at {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+    }
+
+    .at th,
+    .at td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .at th {
+      color: var(--text2);
+      font-weight: 600;
+      font-size: .78rem;
+      text-transform: uppercase;
+      background: var(--surface2);
+    }
+
+    .at tr {
+      cursor: pointer;
+      transition: .15s;
+    }
+
+    .at tr:hover {
+      background: var(--surface2);
+    }
+
+    .ah { color: var(--success); font-weight: 600; }
+    .al { color: var(--danger); font-weight: 600; }
+
+    .tw {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted var(--text2);
+    }
+
+    .tw:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: .75rem;
+      white-space: pre-line;
+      width: 220px;
+      z-index: 100;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .rt {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .rt button {
+      padding: 5px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: .8rem;
+      font-weight: 500;
+    }
+
+    .rt button.on {
+      background: var(--blue);
+      color: var(--text-inv);
+      border-color: var(--blue);
+    }
+
+    .slg {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slg input[type="range"] {
+      flex: 1;
+      accent-color: var(--blue);
+    }
+
+    .slg .v {
+      font-size: .8rem;
+      color: var(--blue);
+      min-width: 24px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .fc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      box-shadow: var(--shadow);
+    }
+
+    .fc h2 {
+      margin: 12px 16px;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 160px);
+      border-radius: var(--radius);
+      z-index: 1;
+    }
+
+    #network {
+      width: 100%;
+      height: calc(100vh - 160px);
+      border-radius: var(--radius);
+      background: var(--surface);
+      display: block;
+    }
+
+    .hid {
+      display: none !important;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        flex-direction: column;
+      }
+      .sidebar-container {
+        flex-direction: row;
+        width: 100%;
+      }
+      .side-icon-bar {
+        width: 100%;
+        height: 54px;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0 16px;
+      }
+      .icon-btn.toggle-trigger {
+        margin-bottom: 0;
+      }
+      .side {
+        position: absolute;
+        top: 54px;
+        left: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 50vh;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      }
+      .side.collapsed {
+        max-height: 0;
+        padding: 0;
+      }
+      .g3 {
+        grid-template-columns: 1fr;
+      }
+      .cb {
+        height: 320px;
+      }
+      #map, #network {
+        height: calc(100vh - 220px);
+      }
+    }
+
+    .ms-wrap { position: relative; }
+    .ms-toggle {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: .82rem;
+      outline: none; cursor: pointer; text-align: left;
+      transition: border-color .2s; font: inherit;
+    }
+    .ms-toggle:hover { border-color: var(--blue); }
+    .ms-dropdown {
+      display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      max-height: 240px; overflow-y: auto; box-shadow: var(--shadow); margin-top: 4px;
+    }
+    .ms-dropdown.open { display: block; }
+    .ms-option {
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+      font-size: .82rem; cursor: pointer; transition: background .15s; user-select: none; color: var(--text);
+    }
+    .ms-option:hover { background: var(--surface2); }
+    .ms-option input[type="checkbox"] { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
+
+    .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 16px; flex-wrap: wrap; }
+    .pager button {
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); cursor: pointer; font-size: .8rem;
+      font-weight: 500; transition: .2s;
+    }
+    .pager button:hover { border-color: var(--blue); color: var(--blue); }
+    .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
+    .pager button:disabled { opacity: .4; cursor: default; }
+    .pager .pinfo { font-size: .78rem; color: var(--text2); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>DROPS分析ダッシュボード</h1>
+      <div class="sub">感性の価値化 — ウェルビーイング指標による投稿分析</div>
+    </div>
+    <span class="badge" id="pc">0 投稿</span>
+    <span class="badge g" id="fc">0 表示中</span>
+    <div class="hdr-right">
+      <div class="theme-toggle">
+        <span id="bl" class="on">☀️ Light</span>
+        <span id="bd">🌙 Dark</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar-container">
+      <div class="side-icon-bar">
+        <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+        <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+        <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+        <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+        <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
+        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+      </div>
+      
+      <aside class="side" id="filterPanel">
+        <h3>
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          フィルター詳細
+        </h3>
+        <div class="fnote">※ フィルタは選択時に自動反映されます</div>
+        <div id="ls" class="st">drop_wb20.json を読み込み中...</div>
+
+        <div class="fg"><label>イベント種別</label><div class="ms-wrap" id="fT"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>性別</label><div class="ms-wrap" id="fG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>年代</label><div class="ms-wrap" id="fA"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>エリアグループ</label><div class="ms-wrap" id="fAG"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>エリア</label><div class="ms-wrap" id="fAR"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>WB指標</label><div class="ms-wrap" id="fC"><button type="button" class="ms-toggle">すべて ▾</button><div class="ms-dropdown"></div></div></div>
+        <div class="fg"><label>投稿日（開始）</label><input type="date" id="fDF"></div>
+        <div class="fg"><label>投稿日（終了）</label><input type="date" id="fDT"></div>
+        <div class="fg">
+          <label>除外する投稿ID</label>
+          <textarea id="fExclude" placeholder="例: art_001, art_002&#10;カンマ・改行・スペース区切りで入力"></textarea>
+          <div class="fnote" style="margin-top:4px">※ artwork_id をカンマ・改行・スペース区切りで指定すると、該当投稿が除外されます</div>
+        </div>
+        <button class="btn btn2" id="rb">🔄 リセット</button>
+        <div class="fg">
+          <label>エリア分析：最低投稿数</label>
+          <div class="slg">
+            <input type="range" id="mp" min="1" max="20" value="1">
+            <span class="v" id="mpv">1</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <main class="main">
+      <div class="tabs">
+        <button class="tab on" data-t="ov">概要</button>
+        <button class="tab" data-t="ar">エリア分析</button>
+        <button class="tab" data-t="po">投稿一覧</button>
+        <button class="tab" data-t="ma">地図</button>
+        <button class="tab" data-t="nw">共起ネットワーク</button>
+        <button class="tab" data-t="an">特異スコア</button>
+      </div>
+
+      <div class="tc on" id="t-ov">
+        <div class="g3" id="scs"></div>
+
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>WB指標別スコア分布</span>
+            <span class="title-tooltip" data-tip="" id="tip-score-dist">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <div class="rt" id="rtg">
+            <button class="on" data-r="top1">Top1のみ</button>
+            <button data-r="top2">Top2まで</button>
+            <button data-r="top3">Top3まで</button>
+            <button data-r="all">すべて</button>
+          </div>
+          <div class="cb"><canvas id="c1"></canvas></div>
+        </div>
+
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>指標別 平均スコア</span>
+            <span class="title-tooltip" data-tip="" id="tip-avg-score">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <div class="cb"><canvas id="c2"></canvas></div>
+        </div>
+
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>指標別キーワード</span>
+            <span class="title-tooltip" data-tip="" id="tip-keywords">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <div id="rts"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-ar">
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <span>エリア比較</span>
+            <span class="title-tooltip" data-tip="" id="tip-area-compare">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。（Top1〜20全ランク対象）</p>
+          <div class="cb tall"><canvas id="c3"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>投稿一覧</span>
+            <span class="title-tooltip" data-tip="" id="tip-area-post-list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+            <span id="arps" style="font-size:.75rem;color:var(--text2)"></span>
+          </h2>
+          <div class="pl" id="arpls"></div>
+          <div class="pager" id="arpgr"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-po">
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <span>投稿一覧</span>
+            <span class="title-tooltip" data-tip="" id="tip-post-list">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+            <span id="ps" style="font-size:.75rem;color:var(--text2)"></span>
+          </h2>
+          <div class="pl" id="pls"></div>
+          <div class="pager" id="ppgr"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-ma">
+        <div class="fc">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>投稿位置マップ</span>
+            <span class="title-tooltip" data-tip="" id="tip-map-view">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <div id="map"></div>
+        </div>
+      </div>
+
+      <div class="tc" id="t-nw">
+        <div class="fc">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>キーワード共起ネットワーク</span>
+            <span class="title-tooltip" data-tip="" id="tip-network-view">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <svg id="network"></svg>
+        </div>
+      </div>
+
+      <div class="tc" id="t-an">
+        <div class="card">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span>特異スコア検出</span>
+            <span class="title-tooltip" data-tip="" id="tip-anomaly-score">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </span>
+          </h2>
+          <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均（Top1〜20全ランク対象）。行クリックで該当投稿を表示。</p>
+          <div style="overflow-x:auto">
+            <table class="at" id="atb">
+              <thead>
+                <tr>
+                  <th>エリア</th>
+                  <th>指標</th>
+                  <th>エリア平均</th>
+                  <th>全体平均</th>
+                  <th>乖離度</th>
+                  <th>件数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card hid" id="ap">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            該当投稿
+          </h2>
+          <div class="pl" id="apl"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="mo" id="mov">
+    <div class="md">
+      <button class="x" id="mcl">&times;</button>
+      <div id="mbd"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      // (既存のstateなどのスクリプトがここに続く...)
+      // 読み込み完了後に tooltip.js のデータをDOMに割り当てる処理を追記
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.TOOLTIP_DESCRIPTIONS) {
+          const t = window.TOOLTIP_DESCRIPTIONS;
+          if ($('tip-score-dist')) $('tip-score-dist').setAttribute('data-tip', t.score_dist || '');
+          if ($('tip-avg-score')) $('tip-avg-score').setAttribute('data-tip', t.avg_score || '');
+          if ($('tip-keywords')) $('tip-keywords').setAttribute('data-tip', t.keywords || '');
+          if ($('tip-area-compare')) $('tip-area-compare').setAttribute('data-tip', t.area_compare || '');
+          if ($('tip-area-post-list')) $('tip-area-post-list').setAttribute('data-tip', t.post_list || '');
+          if ($('tip-post-list')) $('tip-post-list').setAttribute('data-tip', t.post_list || '');
+          if ($('tip-map-view')) $('tip-map-view').setAttribute('data-tip', t.map_view || '');
+          if ($('tip-network-view')) $('tip-network-view').setAttribute('data-tip', t.network_view || '');
+          if ($('tip-anomaly-score')) $('tip-anomaly-score').setAttribute('data-tip', t.anomaly_score || '');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
