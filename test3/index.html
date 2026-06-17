@@ -84,6 +84,7 @@
     }
 
     body {
+      /* 元の見やすく癖のないフォントスタックを完全維持 */
       font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
       background: var(--bg);
       color: var(--text);
@@ -254,6 +255,7 @@
       border-left: 1px solid var(--border);
     }
     
+    /* 閉じている時のスタイル */
     .side.collapsed {
       width: 0;
       padding: 20px 0;
@@ -427,43 +429,12 @@
       color: var(--text);
     }
 
+    /* SVGアイコンのカラーを文字色と同期 */
     .card h2 svg,
     .fc h2 svg,
     .side h3 svg {
       color: var(--text);
       flex-shrink: 0;
-    }
-
-    /* タイトル横ツールチップ用デザイン */
-    .title-tooltip {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      cursor: help;
-      color: var(--text2);
-      transition: color 0.2s;
-    }
-    .title-tooltip:hover {
-      color: var(--blue);
-    }
-    .title-tooltip:hover::after {
-      content: attr(data-tip);
-      position: absolute;
-      bottom: 130%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--surface);
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: .78rem;
-      font-weight: 500;
-      line-height: 1.5;
-      white-space: pre-line;
-      width: 260px;
-      z-index: 1100;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
     }
 
     .g3 {
@@ -872,6 +843,7 @@
       }
     }
 
+    /* Multi-select dropdown */
     .ms-wrap { position: relative; }
     .ms-toggle {
       width: 100%; background: var(--surface); border: 1px solid var(--border);
@@ -893,6 +865,7 @@
     .ms-option:hover { background: var(--surface2); }
     .ms-option input[type="checkbox"] { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
 
+    /* Pagination */
     .pager { display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: 16px; flex-wrap: wrap; }
     .pager button {
       padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
@@ -903,6 +876,40 @@
     .pager button.on { background: var(--blue); color: var(--text-inv); border-color: var(--blue); }
     .pager button:disabled { opacity: .4; cursor: default; }
     .pager .pinfo { font-size: .78rem; color: var(--text2); }
+  
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      color: var(--text2);
+      position: relative;
+      margin-left: 2px;
+      transition: color 0.15s;
+    }
+    .info-icon:hover {
+      color: var(--blue);
+    }
+    .info-icon:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--surface);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 400;
+      line-height: 1.55;
+      white-space: normal;
+      width: 280px;
+      z-index: 1500;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -927,10 +934,10 @@
         <button class="icon-btn toggle-trigger" id="filterToggleBtn" title="フィルターを開閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
         <button class="icon-btn active" title="概要" onclick="document.querySelector('[data-t=\'ov\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
         <button class="icon-btn" title="エリア分析" onclick="document.querySelector('[data-t=\'ar\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></button>
+        
         <button class="icon-btn" title="投稿一覧" onclick="document.querySelector('[data-t=\'po\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
         <button class="icon-btn" title="地図" onclick="document.querySelector('[data-t=\'ma\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button>
-        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
-        <button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+        <button class="icon-btn" title="ネットワーク" onclick="document.querySelector('[data-t=\'nw\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button><button class="icon-btn" title="特異スコア" onclick="document.querySelector('[data-t=\'an\']').click();"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
       </div>
       
       <aside class="side" id="filterPanel">
@@ -969,10 +976,10 @@
       <div class="tabs">
         <button class="tab on" data-t="ov">概要</button>
         <button class="tab" data-t="ar">エリア分析</button>
+        
         <button class="tab" data-t="po">投稿一覧</button>
         <button class="tab" data-t="ma">地図</button>
-        <button class="tab" data-t="nw">共起ネットワーク</button>
-        <button class="tab" data-t="an">特異スコア</button>
+        <button class="tab" data-t="nw">共起ネットワーク</button><button class="tab" data-t="an">特異スコア</button>
       </div>
 
       <div class="tc on" id="t-ov">
@@ -981,11 +988,8 @@
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span>WB指標別スコア分布</span>
-            <span class="title-tooltip" data-tip="" id="tip-score-dist">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            WB指標別スコア分布
+           <span class="info-icon" data-tooltip-key="score_dist"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="rt" id="rtg">
             <button class="on" data-r="top1">Top1のみ</button>
             <button data-r="top2">Top2まで</button>
@@ -998,22 +1002,16 @@
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span>指標別 平均スコア</span>
-            <span class="title-tooltip" data-tip="" id="tip-avg-score">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            指標別 平均スコア
+           <span class="info-icon" data-tooltip-key="avg_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="cb"><canvas id="c2"></canvas></div>
         </div>
 
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            <span>指標別キーワード</span>
-            <span class="title-tooltip" data-tip="" id="tip-keywords">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            指標別キーワード
+           <span class="info-icon" data-tooltip-key="keywords"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div id="rts"></div>
         </div>
       </div>
@@ -1022,38 +1020,29 @@
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            <span>エリア比較</span>
-            <span class="title-tooltip" data-tip="" id="tip-area-compare">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            エリア比較
+           <span class="info-icon" data-tooltip-key="area_compare"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <p style="font-size:.75rem;color:var(--text2);margin-bottom:10px">カテゴリごとにエリア別の平均スコアを比較します。（Top1〜20全ランク対象）</p>
           <div class="cb tall"><canvas id="c3"></canvas></div>
         </div>
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span>投稿一覧</span>
-            <span class="title-tooltip" data-tip="" id="tip-area-post-list">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-            <span id="arps" style="font-size:.75rem;color:var(--text2)"></span>
-          </h2>
+            投稿一覧 <span id="arps" style="font-size:.75rem;color:var(--text2)"></span>
+           <span class="info-icon" data-tooltip-key="post_list"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="pl" id="arpls"></div>
           <div class="pager" id="arpgr"></div>
         </div>
       </div>
 
+      
+
       <div class="tc" id="t-po">
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            <span>投稿一覧</span>
-            <span class="title-tooltip" data-tip="" id="tip-post-list">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-            <span id="ps" style="font-size:.75rem;color:var(--text2)"></span>
-          </h2>
+            投稿一覧 <span id="ps" style="font-size:.75rem;color:var(--text2)"></span>
+           <span class="info-icon" data-tooltip-key="post_list"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div class="pl" id="pls"></div>
           <div class="pager" id="ppgr"></div>
         </div>
@@ -1063,11 +1052,8 @@
         <div class="fc">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span>投稿位置マップ</span>
-            <span class="title-tooltip" data-tip="" id="tip-map-view">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            投稿位置マップ
+           <span class="info-icon" data-tooltip-key="map_view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <div id="map"></div>
         </div>
       </div>
@@ -1076,24 +1062,17 @@
         <div class="fc">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span>キーワード共起ネットワーク</span>
-            <span class="title-tooltip" data-tip="" id="tip-network-view">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            キーワード共起ネットワーク
+           <span class="info-icon" data-tooltip-key="network_view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <svg id="network"></svg>
         </div>
       </div>
-
-      <div class="tc" id="t-an">
+<div class="tc" id="t-an">
         <div class="card">
           <h2>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            <span>特異スコア検出</span>
-            <span class="title-tooltip" data-tip="" id="tip-anomaly-score">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </span>
-          </h2>
+            特異スコア検出
+           <span class="info-icon" data-tooltip-key="anomaly_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
           <p style="font-size:.75rem;color:var(--text2);margin-bottom:12px">乖離度＝エリア平均−全体平均（Top1〜20全ランク対象）。行クリックで該当投稿を表示。</p>
           <div style="overflow-x:auto">
             <table class="at" id="atb">
@@ -1129,87 +1108,956 @@
     </div>
   </div>
 
-<script>
+  <script>
     (() => {
-      // 簡易的なDOM取得関数
-      const $ = id => document.getElementById(id);
-
-      // グローバルな状態管理オブジェクト（データの保持用）
-      window.dashboardState = {
-        allPosts: [],
-        filteredPosts: []
+      // 状態管理の一元化
+      const state = {
+        raw: [],
+        filteredRecs: [],
+        uniquePosts: [],
+        activeTab: 'ov',
+        currentRanks: ['top1'],
+        theme: window.DEFAULT_THEME || 'light',
+        map: null,
+        mapMarkerGroup: null,
+        charts: { ch1: null, ch2: null, ch3: null }
       };
 
-      // 1. JSONデータの読み込み処理 (GitHub Pages 対応の相対パス)
-      async function loadJsonData() {
+      // 定数設定
+      const CONSTANTS = {
+        GRID_SPACING: 0.005,
+        NETWORK_DISTANCE: 80,
+        NETWORK_STRENGTH: -140
+      };
+
+      // DOMヘルパー
+      const $ = id => document.getElementById(id);
+      const getThemeValue = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const getColorConfig = () => window.COLOR_CONFIG[state.theme] || window.COLOR_CONFIG.light;
+
+      // 共通データ処理ユーティリティ
+      const getUniquePostCount = data => new Set(data.map(x => x.artwork_id)).size;
+      const parseCustomDate = s => s ? new Date(String(s).replace(/\//g, '-')) : null;
+
+      function setTheme(t) {
+        state.theme = t;
+        document.documentElement.setAttribute('data-theme', t);
+        $('bl').className = t === 'light' ? 'on' : '';
+        $('bd').className = t === 'dark' ? 'on' : '';
+        localStorage.setItem('drops-theme', t);
+        if (state.raw.length) renderActiveTab();
+      }
+
+      $('bl').addEventListener('click', () => setTheme('light'));
+      $('bd').addEventListener('click', () => setTheme('dark'));
+
+      (() => {
+        const saved = localStorage.getItem('drops-theme');
+        if (saved === 'light' || saved === 'dark') setTheme(saved);
+      })();
+
+      async function loadData() {
         const statusEl = $('ls');
-        if (!statusEl) return;
+        if (typeof window.COLOR_CONFIG === 'undefined') {
+          statusEl.className = 'st er';
+          statusEl.textContent = '❌ config.js の読み込みに失敗しています';
+          return;
+        }
 
         try {
-          statusEl.textContent = "drop_wb20.json を読み込み中...";
-          statusEl.className = "st";
+          const res = await fetch('./drop_wb20.json', { cache: 'no-store' });
+          if (!res.ok) throw new Error(`データの取得に失敗しました (HTTP ${res.status})`);
+          
+          const json = await res.json();
+          if (!Array.isArray(json)) throw new Error('データ形式が正しくありません (Array想定)');
 
-          // 相対パスで読み込み
-          const response = await fetch('./drop_wb20.json');
+          state.raw = json;
+          initFilters();
+          bindEvents();
+          applyFilters();
 
-          if (!response.ok) {
-            throw new Error(`HTTPエラー! ステータス: ${response.status} (${response.statusText})`);
-          }
-
-          const data = await response.json();
-          console.log("JSONデータの読み込みに成功しました:", data);
-
-          // 状態に保存（データ構造に応じて、data.posts などの場合は適切に調整してください）
-          window.dashboardState.allPosts = Array.isArray(data) ? data : (data.posts || []);
-          window.dashboardState.filteredPosts = [...window.dashboardState.allPosts];
-
-          // 読み込み成功時の画面表示更新
-          statusEl.textContent = `正常に読み込み完了 (${window.dashboardState.allPosts.length}件)`;
-          statusEl.className = "st ok";
-
-          if ($('pc')) $('pc').textContent = `${window.dashboardState.allPosts.length} 投稿`;
-          if ($('fc')) $('fc').textContent = `${window.dashboardState.filteredPosts.length} 表示中`;
-
-          // TODO: ここにデータ読み込み後のグラフ描画やマップ初期化関数（initCharts()など）を呼び出します。
-
-        } catch (error) {
-          console.error("JSON読み込みエラー:", error);
-          statusEl.textContent = `読み込みエラー: ${error.message}`;
-          statusEl.className = "st er";
+          statusEl.className = 'st ok';
+          statusEl.textContent = `✅ ${state.raw.length} レコード / ${getUniquePostCount(state.raw)} 投稿`;
+        } catch (e) {
+          console.error(e);
+          statusEl.className = 'st er';
+          statusEl.textContent = `❌ ${e.message}`;
+          renderActiveTab();
         }
       }
 
-      // 2. ページ読み込み完了時の初期化処理
-      document.addEventListener("DOMContentLoaded", () => {
-        // ツールチップ設定の割り当て
-        if (window.TOOLTIP_DESCRIPTIONS) {
-          const t = window.TOOLTIP_DESCRIPTIONS;
-          if ($('tip-score-dist')) $('tip-score-dist').setAttribute('data-tip', t.score_dist || '');
-          if ($('tip-avg-score')) $('tip-avg-score').setAttribute('data-tip', t.avg_score || '');
-          if ($('tip-keywords')) $('tip-keywords').setAttribute('data-tip', t.keywords || '');
-          if ($('tip-area-compare')) $('tip-area-compare').setAttribute('data-tip', t.area_compare || '');
-          if ($('tip-area-post-list')) $('tip-area-post-list').setAttribute('data-tip', t.post_list || '');
-          if ($('tip-post-list')) $('tip-post-list').setAttribute('data-tip', t.post_list || '');
-          if ($('tip-map-view')) $('tip-map-view').setAttribute('data-tip', t.map_view || '');
-          if ($('tip-network-view')) $('tip-network-view').setAttribute('data-tip', t.network_view || '');
-          if ($('tip-anomaly-score')) $('tip-anomaly-score').setAttribute('data-tip', t.anomaly_score || '');
+      function populateSelect(id, options) {
+        const wrap = $(id);
+        const dropdown = wrap.querySelector('.ms-dropdown');
+        const prevChecked = new Set(
+          Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
+        );
+        dropdown.innerHTML = '';
+        options.forEach(v => {
+          const label = document.createElement('label');
+          label.className = 'ms-option';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = v;
+          if (prevChecked.has(v)) cb.checked = true;
+          cb.addEventListener('change', () => { updateToggleText(id); applyFilters(); });
+          const span = document.createElement('span');
+          span.textContent = v;
+          label.appendChild(cb);
+          label.appendChild(span);
+          dropdown.appendChild(label);
+        });
+        updateToggleText(id);
+      }
+      function getMultiSelectValues(id) {
+        return Array.from($(id).querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      }
+      function updateToggleText(id) {
+        const wrap = $(id);
+        const toggle = wrap.querySelector('.ms-toggle');
+        const checked = getMultiSelectValues(id);
+        if (checked.length === 0) toggle.textContent = 'すべて ▾';
+        else if (checked.length === 1) toggle.textContent = checked[0] + ' ▾';
+        else toggle.textContent = checked.length + '件選択中 ▾';
+      }
+
+      function initFilters() {
+        const getUniqValues = key => [...new Set(state.raw.map(d => d[key]).filter(v => v !== undefined && v !== null && v !== ''))].sort();
+        
+        populateSelect('fT', getUniqValues('tenant'));
+        populateSelect('fG', getUniqValues('gender'));
+        populateSelect('fA', getUniqValues('age_group'));
+        populateSelect('fAG', getUniqValues('nearest_AreaGroup'));
+        populateSelect('fAR', getUniqValues('nearest_Area'));
+        populateSelect('fC', getUniqValues('category'));
+      }
+
+      function bindEvents() {
+        // トグル式フィルタパネルの開閉制御
+        $('filterToggleBtn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          const panel = $('filterPanel');
+          panel.classList.toggle('collapsed');
+          this.classList.toggle('active');
+          
+          // 地図やチャートのサイズ再計算トリガー
+          setTimeout(() => {
+            if (state.activeTab === 'ma' && state.map) state.map.invalidateSize();
+            if (state.activeTab === 'nw') renderNetwork();
+          }, 320);
+        });
+
+        // 各アイコンクリック時に対応するタブのアクティブ感を出すための補助
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+          tab.addEventListener('click', function() {
+            const icons = document.querySelectorAll('.side-icon-bar .icon-btn:not(.toggle-trigger)');
+            icons.forEach(i => i.classList.remove('active'));
+            if(icons[index]) icons[index].classList.add('active');
+          });
+        });
+
+        // Multi-select toggle
+        document.querySelectorAll('.ms-toggle').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dd = this.nextElementSibling;
+            const isOpen = dd.classList.contains('open');
+            document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+            if (!isOpen) dd.classList.add('open');
+          });
+        });
+        document.addEventListener('click', e => {
+          if (!e.target.closest('.ms-wrap')) document.querySelectorAll('.ms-dropdown').forEach(d => d.classList.remove('open'));
+        });
+        document.querySelectorAll('.ms-dropdown').forEach(dd => {
+          dd.addEventListener('click', e => e.stopPropagation());
+        });
+        ['fDF', 'fDT'].forEach(id => {
+          $(id).addEventListener('change', applyFilters);
+          $(id).addEventListener('input', applyFilters);
+        });
+        $('fExclude').addEventListener('input', applyFilters);
+
+        $('rb').addEventListener('click', () => {
+          ['fT', 'fG', 'fA', 'fAG', 'fAR', 'fC'].forEach(id => {
+            $(id).querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateToggleText(id);
+          });
+          $('fDF').value = '';
+          $('fDT').value = '';
+          $('fExclude').value = '';
+          applyFilters();
+        });
+
+        $('mp').addEventListener('input', function() {
+          $('mpv').textContent = this.value;
+          if (state.activeTab === 'ar') renderAreaAnalysis();
+        });
+
+        $('mcl').addEventListener('click', closeModal);
+        $('mov').addEventListener('click', e => { if (e.target === $('mov')) closeModal(); });
+
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+            document.querySelectorAll('.tc').forEach(x => x.classList.remove('on'));
+            
+            this.classList.add('on');
+            state.activeTab = this.dataset.t;
+            $(`t-${state.activeTab}`).classList.add('on');
+
+            renderActiveTab();
+          });
+        });
+
+        document.querySelectorAll('#rtg button').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#rtg button').forEach(x => x.classList.remove('on'));
+            this.classList.add('on');
+            const r = this.dataset.r;
+            if (r === 'top1') state.currentRanks = ['top1'];
+            else if (r === 'top2') state.currentRanks = ['top1', 'top2'];
+            else if (r === 'top3') state.currentRanks = ['top1', 'top2', 'top3'];
+            else state.currentRanks = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            renderDistributionChart();
+          });
+        });
+
+        window.addEventListener('resize', () => {
+          if (state.activeTab === 'nw') renderNetwork();
+          if (state.activeTab === 'ma' && state.map) {
+            setTimeout(() => state.map.invalidateSize(), 150);
+          }
+        });
+      }
+
+      function applyFilters() {
+        const filters = {
+          tenant: getMultiSelectValues('fT'),
+          gender: getMultiSelectValues('fG'),
+          age: getMultiSelectValues('fA'),
+          areaGroup: getMultiSelectValues('fAG'),
+          area: getMultiSelectValues('fAR'),
+          category: getMultiSelectValues('fC'),
+          dateFrom: $('fDF').value,
+          dateTo: $('fDT').value
+        };
+
+        const excludeRaw = $('fExclude').value;
+        const excludeIds = new Set(
+          excludeRaw.split(/[,\n\s]+/).map(s => s.trim()).filter(Boolean)
+        );
+        state.filteredRecs = state.raw.filter(d => {
+          if (excludeIds.size && excludeIds.has(String(d.artwork_id))) return false;
+          if (filters.tenant.length && !filters.tenant.includes(d.tenant)) return false;
+          if (filters.gender.length && !filters.gender.includes(d.gender)) return false;
+          if (filters.age.length && !filters.age.includes(d.age_group)) return false;
+          if (filters.areaGroup.length && !filters.areaGroup.includes(d.nearest_AreaGroup)) return false;
+          if (filters.area.length && !filters.area.includes(d.nearest_Area)) return false;
+          if (filters.category.length && !filters.category.includes(d.category)) return false;
+
+          if (filters.dateFrom || filters.dateTo) {
+            const pd = parseCustomDate(d.post_dated_at);
+            if (pd && !isNaN(pd.valueOf())) {
+              if (filters.dateFrom && pd < new Date(filters.dateFrom)) return false;
+              if (filters.dateTo) {
+                const limitDate = new Date(filters.dateTo);
+                limitDate.setDate(limitDate.getDate() + 1);
+                if (pd >= limitDate) return false;
+              }
+            }
+          }
+          return true;
+        });
+
+        const seenIds = new Set();
+        state.uniquePosts = [];
+        state.filteredRecs.forEach(d => {
+          if (!seenIds.has(d.artwork_id)) {
+            seenIds.add(d.artwork_id);
+            state.uniquePosts.push(d);
+          }
+        });
+
+        $('pc').textContent = `${getUniquePostCount(state.raw)} 投稿`;
+        $('fc').textContent = `${state.uniquePosts.length} 表示中`;
+        state.poPage = 1;
+        state.arPage = 1;
+        
+        renderActiveTab();
+      }
+
+      function renderActiveTab() {
+        switch(state.activeTab) {
+          case 'ov':
+            renderSummary();
+            renderDistributionChart();
+            renderAverageScoreChart();
+            renderKeywords();
+            break;
+          case 'ar':
+            renderAreaAnalysis();
+            break;
+          case 'an':
+            renderAnomalyDetection();
+            break;
+          case 'po':
+            renderPostList();
+            break;
+          case 'ma':
+            setTimeout(renderMap, 80);
+            break;
+          case 'nw':
+            setTimeout(renderNetwork, 80);
+            break;
+        }
+      }
+
+      function renderSummary() {
+        const top1Recs = state.filteredRecs.filter(d => d.rank === 'top1');
+        const scores = top1Recs.map(d => Number(d.score)).filter(s => !isNaN(s));
+        const avg = scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : '-';
+        const uniqueAreas = new Set(state.filteredRecs.map(d => d.nearest_AreaGroup || d.nearest_Area).filter(Boolean));
+
+        $('scs').innerHTML = `
+          <div class="sc wb"><div class="v">${state.uniquePosts.length}</div><div class="l">投稿数</div></div>
+          <div class="sc wb"><div class="v">${avg}</div><div class="l">Top1 平均スコア</div></div>
+          <div class="sc ar"><div class="v">${uniqueAreas.size}</div><div class="l">対象エリア数</div></div>
+        `;
+      }
+
+      function renderDistributionChart() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
+
+        const targetData = state.filteredRecs.filter(d => state.currentRanks.includes(d.rank) && d.category);
+        const categoryStats = {};
+
+        targetData.forEach(d => {
+          if (!categoryStats[d.category]) categoryStats[d.category] = { count: 0, totalScore: 0, validScoreCount: 0 };
+          categoryStats[d.category].count++;
+          const score = Number(d.score);
+          if (!isNaN(score)) {
+            categoryStats[d.category].totalScore += score;
+            categoryStats[d.category].validScoreCount++;
+          }
+        });
+
+        const labels = Object.keys(categoryStats).sort((a, b) => categoryStats[b].count - categoryStats[a].count);
+
+        if (state.charts.ch1) state.charts.ch1.destroy();
+        state.charts.ch1 = new Chart($('c1').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '投稿数',
+              data: labels.map(l => categoryStats[l].count),
+              backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  afterLabel: ctx => {
+                    const stats = categoryStats[labels[ctx.dataIndex]];
+                    return `平均: ${stats.validScoreCount ? Math.round((stats.totalScore / stats.validScoreCount) * 10) / 10 : '-'}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { ticks: { color: tickColor }, grid: { color: gridColor } }
+            }
+          }
+        });
+      }
+
+      function renderAverageScoreChart() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
+
+        const top1Recs = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const categoryStats = {};
+
+        top1Recs.forEach(d => {
+          if (!categoryStats[d.category]) categoryStats[d.category] = { total: 0, count: 0 };
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            categoryStats[d.category].total += s;
+            categoryStats[d.category].count++;
+          }
+        });
+
+        const labels = Object.keys(categoryStats).sort();
+        const averages = labels.map(l => categoryStats[l].count ? Math.round((categoryStats[l].total / categoryStats[l].count) * 10) / 10 : 0);
+
+        if (state.charts.ch2) state.charts.ch2.destroy();
+        state.charts.ch2 = new Chart($('c2').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: '平均スコア',
+              data: averages,
+              backgroundColor: labels.map((_, i) => config.wb[i % config.wb.length]),
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
+              y: { ticks: { color: tickColor }, grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      function renderKeywords() {
+        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category && d.reason);
+        const categoryKeywords = {};
+
+        top1Data.forEach(d => {
+          if (!categoryKeywords[d.category]) categoryKeywords[d.category] = {};
+          d.reason.split(/[,、，]/).forEach(r => {
+            const trimmed = r.trim();
+            if (trimmed) {
+              categoryKeywords[d.category][trimmed] = (categoryKeywords[d.category][trimmed] || 0) + 1;
+            }
+          });
+        });
+
+        let htmlString = '';
+        Object.keys(categoryKeywords).sort().forEach(cat => {
+          htmlString += `<div style="margin-bottom:14px"><strong class="tw" data-tip="${window.CATEGORY_DESCRIPTIONS[cat] || ''}">${cat}</strong><br>`;
+          Object.entries(categoryKeywords[cat])
+            .sort((a, b) => b[1] - a[1])
+            .forEach(([word, count]) => {
+              htmlString += `<span class="tag ${count > 1 ? 'hl' : ''}">${word}${count > 1 ? ` (${count})` : ''}</span>`;
+            });
+          htmlString += '</div>';
+        });
+
+        $('rts').innerHTML = htmlString || '<span class="tag">該当データなし</span>';
+      }
+
+      function renderAreaAnalysis() {
+        const config = getColorConfig();
+        const tickColor = getThemeValue('--tick');
+        const gridColor = getThemeValue('--grid');
+        const minPostsThreshold = parseInt($('mp').value, 10) || 1;
+
+        const allRankData = state.filteredRecs.filter(d => d.category);
+        const areaData = {};
+
+        allRankData.forEach(d => {
+          const areaName = d.nearest_AreaGroup || d.nearest_Area || '不明';
+          if (!areaData[areaName]) areaData[areaName] = { postIds: new Set(), categories: {} };
+          areaData[areaName].postIds.add(d.artwork_id);
+          
+          if (!areaData[areaName].categories[d.category]) {
+            areaData[areaName].categories[d.category] = { total: 0, count: 0 };
+          }
+          const score = Number(d.score);
+          if (!isNaN(score)) {
+            areaData[areaName].categories[d.category].total += score;
+            areaData[areaName].categories[d.category].count++;
+          }
+        });
+
+        const sortedValidAreas = Object.keys(areaData)
+          .filter(a => areaData[a].postIds.size >= minPostsThreshold)
+          .sort((a, b) => areaData[b].postIds.size - areaData[a].postIds.size);
+
+        const availableCategories = [...new Set(allRankData.map(d => d.category))].sort();
+
+        if (state.charts.ch3) state.charts.ch3.destroy();
+        state.charts.ch3 = new Chart($('c3').getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: availableCategories,
+            datasets: sortedValidAreas.map((area, idx) => ({
+              label: `${area} (${areaData[area].postIds.size}件)`,
+              data: availableCategories.map(c => {
+                const stats = areaData[area].categories[c];
+                return stats && stats.count ? Math.round((stats.total / stats.count) * 10) / 10 : 0;
+              }),
+              backgroundColor: config.area[idx % config.area.length],
+              borderRadius: 4
+            }))
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: tickColor, font: { size: 11 } } } },
+            scales: {
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } }
+            }
+          }
+        });
+
+        renderPaginatedList('arpls', 'arpgr', 'arps', state.uniquePosts, 'arPage');
+      }
+
+      function renderAnomalyDetection() {
+        const allRankData = state.filteredRecs.filter(d => d.category);
+        const globalCategoryStats = {};
+
+        allRankData.forEach(d => {
+          if (!globalCategoryStats[d.category]) globalCategoryStats[d.category] = { total: 0, count: 0 };
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            globalCategoryStats[d.category].total += s;
+            globalCategoryStats[d.category].count++;
+          }
+        });
+
+        const globalAverages = {};
+        Object.keys(globalCategoryStats).forEach(c => {
+          globalAverages[c] = globalCategoryStats[c].count ? globalCategoryStats[c].total / globalCategoryStats[c].count : 0;
+        });
+
+        const areaCategoryPairStats = {};
+        allRankData.forEach(d => {
+          const area = d.nearest_AreaGroup || d.nearest_Area || '不明';
+          const complexKey = `${area}|||${d.category}`;
+          if (!areaCategoryPairStats[complexKey]) {
+            areaCategoryPairStats[complexKey] = { area, category: d.category, total: 0, count: 0, postIds: [] };
+          }
+          const s = Number(d.score);
+          if (!isNaN(s)) {
+            areaCategoryPairStats[complexKey].total += s;
+            areaCategoryPairStats[complexKey].count++;
+          }
+          areaCategoryPairStats[complexKey].postIds.push(d.artwork_id);
+        });
+
+        const anomalyList = Object.values(areaCategoryPairStats)
+          .filter(a => a.count >= 1)
+          .map(a => {
+            const areaAvg = a.total / a.count;
+            const deviation = areaAvg - globalAverages[a.category];
+            return {
+              area: a.area,
+              category: a.category,
+              areaAvg: Math.round(areaAvg * 10) / 10,
+              globalAvg: Math.round(globalAverages[a.category] * 10) / 10,
+              diff: Math.round(deviation * 10) / 10,
+              count: a.count,
+              postIds: a.postIds
+            };
+          })
+          .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+        const tbody = document.querySelector('#atb tbody');
+        tbody.innerHTML = '';
+
+        anomalyList.slice(0, 40).forEach(anom => {
+          const tr = document.createElement('tr');
+          const className = anom.diff > 0 ? 'ah' : 'al';
+          tr.innerHTML = `
+            <td>${anom.area}</td>
+            <td>${anom.category}</td>
+            <td>${anom.areaAvg}</td>
+            <td>${anom.globalAvg}</td>
+            <td class="${className}">${anom.diff > 0 ? '+' : ''}${anom.diff}</td>
+            <td>${anom.count}</td>
+          `;
+          tr.addEventListener('click', () => showAnomalySpecificPosts(anom));
+          tbody.appendChild(tr);
+        });
+      }
+
+      function createPostListItemElement(post) {
+        const item = document.createElement('div');
+        item.className = 'pi';
+        const displayScore = (post.score !== '' && post.score !== undefined) ? post.score : '-';
+
+        item.innerHTML = `
+          <img src="${post.image_file_path_thumbnail || ''}" alt="" onerror="this.style.display='none'">
+          <div class="info">
+            <div class="sen">${post.sentence || ''}</div>
+            <div class="meta">
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${post.nearest_Area || ''}
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ${post.gender || ''} ${post.age_group || ''}
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                ${post.category || ''}: ${displayScore}
+              </span>
+            </div>
+          </div>
+        `;
+        item.addEventListener('click', () => openModal(post.artwork_id));
+        return item;
+      }
+
+      function showAnomalySpecificPosts(anom) {
+        $('ap').classList.remove('hid');
+        const container = $('apl');
+        container.innerHTML = '';
+
+        const idSet = new Set(anom.postIds);
+        state.filteredRecs
+          .filter(d => idSet.has(d.artwork_id) && d.rank === 'top1')
+          .forEach(p => container.appendChild(createPostListItemElement(p)));
+
+        $('ap').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      function renderPaginatedList(containerId, pagerId, countSpanId, posts, pageKey) {
+        const PAGE_SIZE = 100;
+        if (!state[pageKey]) state[pageKey] = 1;
+        const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+        if (state[pageKey] > totalPages) state[pageKey] = totalPages;
+        const page = state[pageKey];
+        const start = (page - 1) * PAGE_SIZE;
+        const end = Math.min(start + PAGE_SIZE, posts.length);
+        const pageItems = posts.slice(start, end);
+
+        $(countSpanId).textContent = posts.length === 0
+          ? '(0件)'
+          : '(' + (start + 1) + '〜' + end + ' / ' + posts.length + '件)';
+
+        const container = $(containerId);
+        container.innerHTML = '';
+        pageItems.forEach(p => {
+          const top1 = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
+          container.appendChild(createPostListItemElement(top1));
+        });
+
+        const pager = $(pagerId);
+        pager.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const goPage = (tp) => {
+          state[pageKey] = tp;
+          renderPaginatedList(containerId, pagerId, countSpanId, posts, pageKey);
+          $(containerId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        const addBtn = (label, targetPage, isCurrent) => {
+          const btn = document.createElement('button');
+          btn.textContent = label;
+          if (isCurrent) btn.classList.add('on');
+          btn.disabled = isCurrent;
+          btn.addEventListener('click', () => goPage(targetPage));
+          pager.appendChild(btn);
+        };
+
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '◀ 前へ';
+        prevBtn.disabled = (page === 1);
+        prevBtn.addEventListener('click', () => goPage(page - 1));
+        pager.appendChild(prevBtn);
+
+        let startP = Math.max(1, page - 3);
+        let endP = Math.min(totalPages, page + 3);
+        if (startP > 1) {
+          addBtn('1', 1, page === 1);
+          if (startP > 2) { const sp = document.createElement('span'); sp.className = 'pinfo'; sp.textContent = '…'; pager.appendChild(sp); }
+        }
+        for (let i = startP; i <= endP; i++) addBtn(String(i), i, i === page);
+        if (endP < totalPages) {
+          if (endP < totalPages - 1) { const sp = document.createElement('span'); sp.className = 'pinfo'; sp.textContent = '…'; pager.appendChild(sp); }
+          addBtn(String(totalPages), totalPages, page === totalPages);
         }
 
-        // テーマ切り替えの簡易イベント
-        if ($('bl') && $('bd')) {
-          $('bl').addEventListener('click', () => {
-            document.documentElement.setAttribute('data-theme', 'light');
-            $('bl').className = 'on'; $('bd').className = '';
-          });
-          $('bd').addEventListener('click', () => {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            $('bd').className = 'on'; $('bl').className = '';
-          });
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '次へ ▶';
+        nextBtn.disabled = (page === totalPages);
+        nextBtn.addEventListener('click', () => goPage(page + 1));
+        pager.appendChild(nextBtn);
+      }
+
+      function renderPostList() {
+        renderPaginatedList('pls', 'ppgr', 'ps', state.uniquePosts, 'poPage');
+      }
+
+      function calculateDensityCenter(coords) {
+        if (!coords.length) return null;
+        const grid = {};
+
+        coords.forEach(([lat, lng]) => {
+          const key = `${Math.round(lat / CONSTANTS.GRID_SPACING)}_${Math.round(lng / CONSTANTS.GRID_SPACING)}`;
+          if (!grid[key]) grid[key] = { latSum: 0, lngSum: 0, count: 0 };
+          grid[key].latSum += lat;
+          grid[key].lngSum += lng;
+          grid[key].count++;
+        });
+
+        let densestGrid = null;
+        Object.values(grid).forEach(g => {
+          if (!densestGrid || g.count > densestGrid.count) densestGrid = g;
+        });
+
+        return densestGrid ? [densestGrid.latSum / densestGrid.count, densestGrid.lngSum / densestGrid.count, densestGrid.count] : null;
+      }
+
+      function renderMap() {
+        if (!state.map) {
+          state.map = L.map('map', { zoomControl: true });
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(state.map);
+          state.mapMarkerGroup = L.layerGroup().addTo(state.map);
         }
 
-        // JSONデータの読み込みを開始
-        loadJsonData();
-      });
+        state.mapMarkerGroup.clearLayers();
+        const validCoords = [];
+
+        state.uniquePosts.forEach(p => {
+          if (p.latitude == null || p.longitude == null || p.latitude === '' || p.longitude === '') return;
+          const lat = Number(p.latitude);
+          const lng = Number(p.longitude);
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          validCoords.push([lat, lng]);
+
+          const top1Data = state.filteredRecs.find(d => d.artwork_id === p.artwork_id && d.rank === 'top1') || p;
+
+          const marker = L.circleMarker([lat, lng], {
+            radius: 8,
+            fillColor: getThemeValue('--blue'),
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 0.85
+          });
+
+          marker.bindPopup(`
+            <div style="max-width:260px;font-size:.8rem">
+              <b>${top1Data.category || ''}</b> (${top1Data.score || '-'})<br>
+              ${(p.sentence || '').slice(0, 100)}…
+            </div>
+          `);
+
+          marker.on('click', () => openModal(p.artwork_id));
+          state.mapMarkerGroup.addLayer(marker);
+        });
+
+        setTimeout(() => state.map.invalidateSize(), 80);
+
+        if (validCoords.length) {
+          const center = calculateDensityCenter(validCoords);
+          if (center) {
+            const zoomLevel = center[2] >= 10 ? 15 : center[2] >= 5 ? 14 : 13;
+            state.map.setView([center[0], center[1]], zoomLevel);
+          } else {
+            state.map.fitBounds(validCoords, { padding: [30, 30] });
+          }
+        } else {
+          state.map.setView([35.68, 139.76], 11);
+        }
+      }
+
+      function renderNetwork() {
+        const config = getColorConfig();
+        const svg = d3.select('#network');
+        if (!svg.node()) return;
+
+        svg.selectAll('*').remove();
+
+        const bounds = svg.node().getBoundingClientRect();
+        const width = bounds.width || 800;
+        const height = bounds.height || Math.max(window.innerHeight - 180, 500);
+        svg.attr('width', width).attr('height', height);
+
+        const coOccurrences = {};
+        const keywordCounts = {};
+
+        state.filteredRecs.filter(d => d.rank === 'top1' && d.reason).forEach(d => {
+          const keywords = [...new Set(String(d.reason).split(/[,、，]/).map(r => r.trim()).filter(Boolean))];
+
+          keywords.forEach(k => { keywordCounts[k] = (keywordCounts[k] || 0) + 1; });
+
+          for (let i = 0; i < keywords.length; i++) {
+            for (let j = i + 1; j < keywords.length; j++) {
+              const complexKey = [keywords[i], keywords[j]].sort().join('|||');
+              coOccurrences[complexKey] = (coOccurrences[complexKey] || 0) + 1;
+            }
+          }
+        });
+
+        const topKeywords = Object.entries(keywordCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 40)
+          .map(e => e[0]);
+
+        const topKeywordsSet = new Set(topKeywords);
+        const nodes = topKeywords.map(k => ({ id: k, count: keywordCounts[k] }));
+
+        const links = [];
+        Object.entries(coOccurrences).forEach(([key, val]) => {
+          const [source, target] = key.split('|||');
+          if (topKeywordsSet.has(source) && topKeywordsSet.has(target)) {
+            links.push({ source, target, value: val });
+          }
+        });
+
+        if (!nodes.length) return;
+
+        const radiusScale = d3.scaleSqrt().domain([1, d3.max(nodes, d => d.count) || 1]).range([5, 24]);
+        const weightScale = d3.scaleLinear().domain([1, d3.max(links, d => d.value) || 1]).range([1, 5]);
+        const strokeColor = getThemeValue('--link-line');
+
+        const simulation = d3.forceSimulation(nodes)
+          .force('link', d3.forceLink(links).id(d => d.id).distance(CONSTANTS.NETWORK_DISTANCE))
+          .force('charge', d3.forceManyBody().strength(CONSTANTS.NETWORK_STRENGTH))
+          .force('center', d3.forceCenter(width / 2, height / 2))
+          .force('collide', d3.forceCollide().radius(d => radiusScale(d.count) + 10));
+
+        const linkElements = svg.append('g')
+          .selectAll('line')
+          .data(links)
+          .enter()
+          .append('line')
+          .attr('stroke', strokeColor)
+          .attr('stroke-width', d => weightScale(d.value))
+          .attr('stroke-opacity', 0.85);
+
+        const nodeElements = svg.append('g')
+          .selectAll('g')
+          .data(nodes)
+          .enter()
+          .append('g')
+          .call(d3.drag()
+            .on('start', (e, d) => {
+              if (!e.active) simulation.alphaTarget(0.3).restart();
+              d.fx = d.x;
+              d.fy = d.y;
+            })
+            .on('drag', (e, d) => {
+              d.fx = e.x;
+              d.fy = e.y;
+            })
+            .on('end', (e, d) => {
+              if (!e.active) simulation.alphaTarget(0);
+              d.fx = null;
+              d.fy = null;
+            })
+          );
+
+        nodeElements.append('circle')
+          .attr('r', d => radiusScale(d.count))
+          .attr('fill', (d, i) => config.node[i % config.node.length])
+          .attr('stroke', config.nodeStroke)
+          .attr('stroke-width', 2.5)
+          .attr('opacity', 0.95);
+
+        nodeElements.append('text')
+          .text(d => d.id)
+          .attr('text-anchor', 'middle')
+          .attr('dy', '0.35em')
+          .attr('fill', config.nodeText)
+          .attr('font-size', d => Math.max(9, Math.min(14, radiusScale(d.count))))
+          .attr('font-weight', 600)
+          .attr('pointer-events', 'none');
+
+        simulation.on('tick', () => {
+          linkElements
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+
+          nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
+        });
+      }
+
+      function openModal(aid) {
+        const records = state.filteredRecs.filter(d => d.artwork_id === aid);
+        if (!records.length) return;
+
+        const basePost = records[0];
+        const rankedList = records.slice().sort((a, b) => {
+          const rankWeight = { top1: 1, top2: 2, top3: 3 };
+          return (rankWeight[a.rank] || 9) - (rankWeight[b.rank] || 9);
+        });
+
+        let html = `
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            投稿詳細
+          </h2>`;
+        if (basePost.image_file_path_thumbnail) {
+          html += `<img src="${basePost.image_file_path_thumbnail}" alt="" onerror="this.style.display='none'">`;
+        }
+
+        html += `
+          <p style="margin-bottom:12px;line-height:1.65">${basePost.sentence || ''}</p>
+          <table>
+            <tr><th>性別</th><td>${basePost.gender || '-'}</td></tr>
+            <tr><th>年代</th><td>${basePost.age_group || '-'} (${basePost.age_group_half || '-'})</td></tr>
+            <tr><th>投稿日時</th><td>${basePost.post_dated_at || '-'}</td></tr>
+            <tr><th>エリア</th><td>${basePost.nearest_AreaGroup || ''} / ${basePost.nearest_Area || ''}</td></tr>
+            <tr><th>座標</th><td>${basePost.latitude || '-'}, ${basePost.longitude || '-'}</td></tr>
+          </table>
+          <h3 style="margin:16px 0 8px;font-size:.9rem;display:flex;align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            WB指標 Top1〜3
+          </h3>
+          <table>
+            <tr><th>順位</th><th>指標</th><th>スコア</th><th>根拠</th></tr>
+        `;
+
+        rankedList.forEach(r => {
+          const scoreVal = (r.score !== '' && r.score !== undefined) ? r.score : '-';
+          const scorePercent = scoreVal !== '-' ? scoreVal : 0;
+          const barColor = scorePercent >= 70 ? 'var(--success)' : scorePercent >= 40 ? 'var(--warn)' : 'var(--danger)';
+
+          html += `
+            <tr>
+              <td>${r.rank || '-'}</td>
+              <td><span class="tw" data-tip="${window.CATEGORY_DESCRIPTIONS[r.category] || ''}">${r.category || '-'}</span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  ${scoreVal}
+                  <div class="sb" style="width:80px">
+                    <div class="f" style="width:${scorePercent}%;background:${barColor}"></div>
+                  </div>
+                </div>
+              </td>
+              <td>${(r.reason || '').split(/[,、，]/).map(t => t.trim()).filter(Boolean).map(t => `<span class="tag">${t}</span>`).join('')}</td>
+            </tr>
+          `;
+        });
+
+        html += `</table>`;
+        $('mbd').innerHTML = html;
+        $('mov').classList.add('show');
+      }
+
+      function closeModal() {
+        $('mov').classList.remove('show');
+      }
+
+      function initTooltips() {
+        if (!window.TOOLTIP_DESCRIPTIONS) return;
+        document.querySelectorAll('.info-icon[data-tooltip-key]').forEach(el => {
+          const key = el.dataset.tooltipKey;
+          const tip = window.TOOLTIP_DESCRIPTIONS[key];
+          if (tip) el.setAttribute('data-tip', tip);
+        });
+      }
+      initTooltips();
+      loadData();
     })();
   </script>
 </body>
