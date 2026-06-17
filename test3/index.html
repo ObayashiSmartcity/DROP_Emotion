@@ -1129,11 +1129,59 @@
     </div>
   </div>
 
-  <script>
+<script>
     (() => {
-      // (既存のstateなどのスクリプトがここに続く...)
-      // 読み込み完了後に tooltip.js のデータをDOMに割り当てる処理を追記
+      // 簡易的なDOM取得関数
+      const $ = id => document.getElementById(id);
+
+      // グローバルな状態管理オブジェクト（データの保持用）
+      window.dashboardState = {
+        allPosts: [],
+        filteredPosts: []
+      };
+
+      // 1. JSONデータの読み込み処理 (GitHub Pages 対応の相対パス)
+      async function loadJsonData() {
+        const statusEl = $('ls');
+        if (!statusEl) return;
+
+        try {
+          statusEl.textContent = "drop_wb20.json を読み込み中...";
+          statusEl.className = "st";
+
+          // 相対パスで読み込み
+          const response = await fetch('./drop_wb20.json');
+
+          if (!response.ok) {
+            throw new Error(`HTTPエラー! ステータス: ${response.status} (${response.statusText})`);
+          }
+
+          const data = await response.json();
+          console.log("JSONデータの読み込みに成功しました:", data);
+
+          // 状態に保存（データ構造に応じて、data.posts などの場合は適切に調整してください）
+          window.dashboardState.allPosts = Array.isArray(data) ? data : (data.posts || []);
+          window.dashboardState.filteredPosts = [...window.dashboardState.allPosts];
+
+          // 読み込み成功時の画面表示更新
+          statusEl.textContent = `正常に読み込み完了 (${window.dashboardState.allPosts.length}件)`;
+          statusEl.className = "st ok";
+
+          if ($('pc')) $('pc').textContent = `${window.dashboardState.allPosts.length} 投稿`;
+          if ($('fc')) $('fc').textContent = `${window.dashboardState.filteredPosts.length} 表示中`;
+
+          // TODO: ここにデータ読み込み後のグラフ描画やマップ初期化関数（initCharts()など）を呼び出します。
+
+        } catch (error) {
+          console.error("JSON読み込みエラー:", error);
+          statusEl.textContent = `読み込みエラー: ${error.message}`;
+          statusEl.className = "st er";
+        }
+      }
+
+      // 2. ページ読み込み完了時の初期化処理
       document.addEventListener("DOMContentLoaded", () => {
+        // ツールチップ設定の割り当て
         if (window.TOOLTIP_DESCRIPTIONS) {
           const t = window.TOOLTIP_DESCRIPTIONS;
           if ($('tip-score-dist')) $('tip-score-dist').setAttribute('data-tip', t.score_dist || '');
@@ -1146,6 +1194,21 @@
           if ($('tip-network-view')) $('tip-network-view').setAttribute('data-tip', t.network_view || '');
           if ($('tip-anomaly-score')) $('tip-anomaly-score').setAttribute('data-tip', t.anomaly_score || '');
         }
+
+        // テーマ切り替えの簡易イベント
+        if ($('bl') && $('bd')) {
+          $('bl').addEventListener('click', () => {
+            document.documentElement.setAttribute('data-theme', 'light');
+            $('bl').className = 'on'; $('bd').className = '';
+          });
+          $('bd').addEventListener('click', () => {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            $('bd').className = 'on'; $('bl').className = '';
+          });
+        }
+
+        // JSONデータの読み込みを開始
+        loadJsonData();
       });
     })();
   </script>
