@@ -1004,6 +1004,12 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             指標別 平均スコア
            <span class="info-icon" data-tooltip-key="avg_score"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <div class="rt" id="rtg2">
+            <button class="on" data-r="top1">Top1のみ</button>
+            <button data-r="top2">Top2まで</button>
+            <button data-r="top3">Top3まで</button>
+            <button data-r="all">すべて</button>
+          </div>
           <div class="cb"><canvas id="c2"></canvas></div>
         </div>
 
@@ -1012,6 +1018,12 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
             指標別キーワード
            <span class="info-icon" data-tooltip-key="keywords"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
+          <div class="rt" id="rtg3">
+            <button class="on" data-r="top1">Top1のみ</button>
+            <button data-r="top2">Top2まで</button>
+            <button data-r="top3">Top3まで</button>
+            <button data-r="all">すべて</button>
+          </div>
           <div id="rts"></div>
         </div>
       </div>
@@ -1117,6 +1129,8 @@
         uniquePosts: [],
         activeTab: 'ov',
         currentRanks: ['top1'],
+        currentRanksAvg: ['top1'],
+        currentRanksKw: ['top1'],
         theme: window.DEFAULT_THEME || 'light',
         map: null,
         mapMarkerGroup: null,
@@ -1321,6 +1335,30 @@
             else state.currentRanks = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
             renderDistributionChart();
           });
+        document.querySelectorAll('#rtg2 button').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#rtg2 button').forEach(x => x.classList.remove('on'));
+            this.classList.add('on');
+            const r = this.dataset.r;
+            if (r === 'top1') state.currentRanksAvg = ['top1'];
+            else if (r === 'top2') state.currentRanksAvg = ['top1', 'top2'];
+            else if (r === 'top3') state.currentRanksAvg = ['top1', 'top2', 'top3'];
+            else state.currentRanksAvg = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            renderAverageScoreChart();
+          });
+        });
+        document.querySelectorAll('#rtg3 button').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#rtg3 button').forEach(x => x.classList.remove('on'));
+            this.classList.add('on');
+            const r = this.dataset.r;
+            if (r === 'top1') state.currentRanksKw = ['top1'];
+            else if (r === 'top2') state.currentRanksKw = ['top1', 'top2'];
+            else if (r === 'top3') state.currentRanksKw = ['top1', 'top2', 'top3'];
+            else state.currentRanksKw = Array.from({length: 10}, (_, i) => 'top' + (i + 1));
+            renderKeywords();
+          });
+        });
         });
 
         window.addEventListener('resize', () => {
@@ -1485,7 +1523,7 @@
         const tickColor = getThemeValue('--tick');
         const gridColor = getThemeValue('--grid');
 
-        const top1Recs = state.filteredRecs.filter(d => d.rank === 'top1' && d.category);
+        const top1Recs = state.filteredRecs.filter(d => state.currentRanksAvg.includes(d.rank) && d.category);
         const categoryStats = {};
 
         top1Recs.forEach(d => {
@@ -1513,20 +1551,19 @@
             }]
           },
           options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } },
-              y: { ticks: { color: tickColor }, grid: { display: false } }
+              x: { ticks: { color: tickColor }, grid: { display: false } },
+              y: { min: 0, max: 100, ticks: { color: tickColor }, grid: { color: gridColor } }
             }
           }
         });
       }
 
       function renderKeywords() {
-        const top1Data = state.filteredRecs.filter(d => d.rank === 'top1' && d.category && d.reason);
+        const top1Data = state.filteredRecs.filter(d => state.currentRanksKw.includes(d.rank) && d.category && d.reason);
         const categoryKeywords = {};
 
         top1Data.forEach(d => {
