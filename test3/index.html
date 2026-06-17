@@ -1094,7 +1094,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             キーワード共起ネットワーク
            <span class="info-icon" data-tooltip-key="network_view"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span></h2>
-          <svg id="network"></svg>
+          <div class="rt" id="rtg4" style="margin: 0 16px 12px">
+        <button class="on" data-r="top1">Top1のみ</button>
+        <button data-r="top2">Top2まで</button>
+        <button data-r="top3">Top3まで</button>
+        <button data-r="all">すべて</button>
+      </div>
+      <svg id="network"></svg>
         </div>
       </div>
 <div class="tc" id="t-an">
@@ -1149,6 +1155,7 @@
         currentRanks: ['top1'],
         currentRanksAvg: ['top1'],
         currentRanksKw: ['top1'],
+        currentRanksNw: ['top1'],
         theme: window.DEFAULT_THEME || 'light',
         map: null,
         mapMarkerGroup: null,
@@ -1377,6 +1384,19 @@
             else if (r === 'top3') state.currentRanksKw = ['top1', 'top2', 'top3'];
             else state.currentRanksKw = Array.from({length: 20}, (_, i) => 'top' + (i + 1));
             renderKeywords();
+          });
+        });
+
+        document.querySelectorAll('#rtg4 button').forEach(btn => {
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('#rtg4 button').forEach(x => x.classList.remove('on'));
+            this.classList.add('on');
+            const r = this.dataset.r;
+            if (r === 'top1') state.currentRanksNw = ['top1'];
+            else if (r === 'top2') state.currentRanksNw = ['top1', 'top2'];
+            else if (r === 'top3') state.currentRanksNw = ['top1', 'top2', 'top3'];
+            else state.currentRanksNw = Array.from({length: 20}, (_, i) => 'top' + (i + 1));
+            renderNetwork();
           });
         });
         });
@@ -1947,7 +1967,7 @@
         const coOccurrences = {};
         const keywordCounts = {};
 
-        state.filteredRecs.filter(d => d.rank === 'top1' && d.reason).forEach(d => {
+        state.filteredRecs.filter(d => state.currentRanksNw.includes(d.rank) && d.reason).forEach(d => {
           const keywords = [...new Set(String(d.reason).split(/[,、，]/).map(r => r.trim()).filter(Boolean))];
 
           keywords.forEach(k => { keywordCounts[k] = (keywordCounts[k] || 0) + 1; });
