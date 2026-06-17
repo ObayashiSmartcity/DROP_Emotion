@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wellbeing × Wellbeing マトリックス</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 14px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+  background: #f8f9fa; color: #202124; line-height: 1.5;
+}
+.container { max-width: 100%; padding: 24px 32px; }
+h1 { font-size: 20px; font-weight: 600; color: #202124; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #5f6368; margin-bottom: 20px; }
+.nav-tabs {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  border-bottom: 2px solid #e8eaed;
+}
+.nav-tabs a {
+  padding: 8px 16px; font-size: 13px; color: #5f6368;
+  text-decoration: none; border-radius: 8px 8px 0 0;
+  border: 1px solid transparent; border-bottom: none;
+  transition: background 0.15s;
+}
+.nav-tabs a:hover {
+  background: #f1f3f4; color: #202124;
+}
+.nav-tabs a.active {
+  color: #1a73e8; font-weight: 600;
+  background: #fff; border-color: #e8eaed;
+  margin-bottom: -2px;
+}
+.controls {
+  display: flex; gap: 20px; align-items: center;
+  flex-wrap: wrap; margin-bottom: 16px;
+}
+.control-group { display: flex; align-items: center; gap: 8px; }
+.control-group label {
+  font-size: 12px; color: #5f6368; font-weight: 600; white-space: nowrap;
+}
+select {
+  padding: 6px 12px; border: 1px solid #dadce0; border-radius: 8px;
+  font-size: 13px; background: #fff; color: #202124; outline: none; cursor: pointer;
+}
+select:focus { border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.15); }
+.metric-desc {
+  font-size: 12px; color: #1a73e8; padding: 6px 12px;
+  background: #e8f0fe; border-radius: 8px;
+}
+.legend-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px; font-size: 11px; color: #5f6368;
+}
+.legend-gradient {
+  width: 200px; height: 12px; border-radius: 6px; border: 1px solid #dadce0;
+}
+.legend-support {
+  display: flex; align-items: center; gap: 4px; margin-left: 16px;
+}
+.legend-support-mark {
+  width: 3px; height: 14px; background: #bcbcbc; border-radius: 1px;
+}
+.table-wrapper {
+  overflow: auto; max-height: calc(100vh - 220px);
+  border: 1px solid #dadce0; border-radius: 12px;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+table.heatmap { border-collapse: separate; border-spacing: 0; }
+table.heatmap th {
+  font-size: 11px; font-weight: 500; color: #5f6368;
+  padding: 6px 4px; background: #fff;
+}
+table.heatmap th.col-header {
+  min-width: 36px; max-width: 36px; height: 120px;
+  vertical-align: bottom; padding-bottom: 8px;
+  position: sticky; top: 0; z-index: 3;
+  border-bottom: 2px solid #e8eaed;
+  text-align: center;
+}
+table.heatmap th.col-header span {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+table.heatmap th.corner {
+  position: sticky; top: 0; left: 0; z-index: 4;
+  background: #fff; min-width: 90px;
+  border-bottom: 2px solid #e8eaed; border-right: 2px solid #e8eaed;
+  font-size: 10px; color: #9aa0a6;
+}
+table.heatmap th.row-header {
+  position: sticky; left: 0; z-index: 2; background: #fff;
+  text-align: left; padding: 6px 12px; font-weight: 500;
+  border-right: 2px solid #e8eaed; border-bottom: 1px solid #f1f3f4;
+  white-space: nowrap;
+}
+table.heatmap td {
+  text-align: center; font-size: 11px; font-weight: 500;
+  padding: 5px 3px; cursor: pointer; position: relative;
+  min-width: 56px; max-width: 56px;
+  border: 1px solid #f1f3f4; transition: outline 0.1s;
+}
+table.heatmap td:hover { outline: 2px solid #1a73e8; outline-offset: -2px; z-index: 1; }
+table.heatmap td.null-cell { background: #f8f9fa; color: #dadce0; cursor: default; }
+table.heatmap td.null-cell:hover { outline: none; }
+table.heatmap td.diag-cell { background: #f1f3f4; cursor: default; color: transparent; }
+table.heatmap td.diag-cell:hover { outline: none; }
+table.heatmap td.low-support {
+  background: #f1f3f4 !important;
+  color: #9aa0a6 !important;
+}
+table.heatmap td.low-support::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: #bcbcbc;
+}
+table.heatmap td.subtotal {
+  font-weight: 600;
+  border-top: 2px solid #e8eaed;
+  border-left: 2px solid #e8eaed;
+}
+table.heatmap th.subtotal-header {
+  background: #f8f9fa;
+  color: #5f6368; font-size: 11px; font-weight: 600;
+  border-top: 2px solid #e8eaed;
+  border-left: 2px solid #e8eaed;
+}
+table.heatmap th.subtotal-header {
+  color: #5f6368; font-size: 11px;
+}
+table.heatmap td.subtotal {
+  cursor: pointer;
+}
+table.heatmap td.subtotal:hover {
+  outline: 2px solid #1a73e8;
+  outline-offset: -2px;
+  z-index: 1;
+}
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.3);
+  z-index: 100; justify-content: center; align-items: flex-start;
+  padding-top: 60px;
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+  background: #fff; border-radius: 16px; padding: 24px;
+  max-width: 840px; width: 92%; max-height: calc(100vh - 120px);
+  overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  animation: modalIn 0.2s ease-out;
+}
+.modal-tag-counts {
+  font-size: 12px; color: #5f6368; font-weight: 400;
+  margin-top: 4px; padding-left: 2px; line-height: 1.8;
+}
+.modal-tag-counts .pct {
+  color: #1a73e8; font-weight: 500;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; margin-bottom: 16px;
+}
+.modal-title { font-size: 15px; font-weight: 600; color: #202124; }
+.modal-close {
+  width: 32px; height: 32px; border: none; background: none;
+  font-size: 20px; color: #5f6368; cursor: pointer; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: #f1f3f4; }
+.modal-tag-counts {
+  font-size: 12px; color: #5f6368; font-weight: 400;
+  margin-top: 4px; padding-left: 2px;
+}
+table.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.detail-table th {
+  text-align: left; padding: 8px 12px; border-bottom: 2px solid #e8eaed;
+  color: #5f6368; font-weight: 600; font-size: 12px;
+  cursor: pointer; user-select: none; white-space: nowrap;
+}
+table.detail-table th:hover { background: #e8f0fe; }
+table.detail-table th .si { margin-left: 4px; font-size: 10px; color: #9aa0a6; }
+table.detail-table td {
+  padding: 8px 12px; border-bottom: 1px solid #f1f3f4; color: #202124;
+}
+table.detail-table tr:hover td { background: #f8f9fa; }
+.footer { margin-top: 16px; font-size: 11px; color: #9aa0a6; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Wellbeing × Wellbeing マトリックス</h1>
+  <p class="subtitle">イベント情報の閲覧ログ：目的「Wellbeingタグ同士の相性のいい組み合わせを探る」</p>
+
+  <nav class="nav-tabs">
+    <a href='matrix_act_wb.html'>Activity × Wellbeing</a>
+    <a href='matrix_wb_wb.html' class='active'>Wellbeing × Wellbeing</a>
+    <a href='matrix_act_act.html'>Activity × Activity</a>
+  </nav>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>期間：</label>
+      <select id="sel-period">
+        <option value="all_days">全期間</option>
+        <option value="last_30_days">直近30日</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>エリア：</label>
+      <select id="sel-area">
+        <option value="全体">全体</option>
+        <option value="御堂筋以東">御堂筋以東</option>
+        <option value="御堂筋以西">御堂筋以西</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>指標：</label>
+      <select id="sel-metric">
+        <option value="pv_deviation">PV数（偏差値）</option>
+        <option value="count">イベント件数</option>
+      </select>
+    </div>
+    <span class="metric-desc" id="metric-desc"></span>
+  </div>
+
+  <div class="legend-bar">
+    <span id="legend-low">低</span>
+    <div class="legend-gradient" id="legend-gradient"></div>
+    <span id="legend-high">高</span>
+    <div class="legend-support">
+      <span class="legend-support-mark"></span>
+      <span>イベント件数 <span id="min-sup-val"></span>件以下</span>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="heatmap" id="heatmap"></table>
+  </div>
+
+  <div class="footer">
+    生成日時: <span id="gen-at"></span>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <table class="detail-table" id="detail-table"></table>
+  </div>
+</div>
+
+<!-- 同期読み込み: scores → detail → app の順で実行 -->
+<script src="scores_wb_wb.js"></script>
+<script src="detail_wb_wb.js"></script>
+<script>
+var SCORES = SCORES_WB_WB;
+var DETAIL = DETAIL_WB_WB;
+var IS_SYM = true;
+var MIN_SUP = SCORES.meta.min_support;
+
+var METRIC_DESC = {
+  pv_deviation: "中央値PVの偏差値。50=平均、60以上で高需要",
+  count:        "タグペアに該当するユニークイベント件数"
+};
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function rgbStr(r, g, b) { return "rgb(" + Math.round(r) + "," + Math.round(g) + "," + Math.round(b) + ")"; }
+
+function getCellStyle(value, metric, flatVals) {
+  if (value === null || value === undefined) return { bg: "#f8f9fa", fg: "#c0c0c0" };
+  var vals = flatVals.filter(function(v) { return v !== null && v !== undefined && v > 0; });
+  if (vals.length === 0) return { bg: "#fff", fg: "#202124" };
+
+  var t, r, g, b;
+
+  if (metric === "count") {
+    /* 0〜200 固定スケール、白→緑 */
+    t = Math.min(value / 200, 1) * 0.65;
+    r = lerp(255, 52, t); g = lerp(255, 168, t); b = lerp(255, 83, t);
+    return { bg: rgbStr(r, g, b), fg: t > 0.35 ? "#fff" : "#202124" };
+  }
+
+  if (metric === "pv_deviation") {
+    /* center=50, 青(低)→白(50)→緑(高), ±30で最大色 */
+    var ratio = (value - 50) / 30;
+    t = Math.min(Math.abs(ratio), 1) * 0.65;
+    if (ratio < 0) {
+      r = lerp(255, 26, t); g = lerp(255, 115, t); b = lerp(255, 232, t);
+    } else {
+      r = lerp(255, 52, t); g = lerp(255, 168, t); b = lerp(255, 83, t);
+    }
+    return { bg: rgbStr(r, g, b), fg: t > 0.35 ? "#fff" : "#202124" };
+  }
+
+  return { bg: "#fff", fg: "#202124" };
+}
+
+function updateLegend(metric) {
+  var grad = document.getElementById("legend-gradient");
+  var lo   = document.getElementById("legend-low");
+  var hi   = document.getElementById("legend-high");
+  if (metric === "pv_deviation") {
+    grad.style.background = "linear-gradient(to right, #1a73e8, #fff 50%, #34a853)";
+    lo.textContent = "低"; hi.textContent = "高";
+  } else {
+    /* pv_median, count: 白→緑 */
+    grad.style.background = "linear-gradient(to right, #fff, #34a853)";
+    lo.textContent = "0"; hi.textContent = "多";
+  }
+}
+
+function render() {
+  var period = document.getElementById("sel-period").value;
+  var area   = document.getElementById("sel-area").value;
+  var metric = document.getElementById("sel-metric").value;
+  document.getElementById("metric-desc").textContent = METRIC_DESC[metric] || "";
+  updateLegend(metric);
+
+  var slice = (SCORES.data[period] || {})[area];
+  if (!slice) {
+    document.getElementById("heatmap").innerHTML = "<tr><td>データなし</td></tr>";
+    return;
+  }
+  var matrix = slice[metric];
+  var counts = slice["count"];
+  var rows   = SCORES.rows;
+  var cols   = SCORES.cols;
+  var flat   = [].concat.apply([], matrix);
+
+  /* 小計（pv_deviation / count のみ対応。pv_sum 等は小計なし） */
+  var rowSub = (slice.row_subtotal || {})[metric] || null;
+  var colSub = (slice.col_subtotal || {})[metric] || null;
+  var hasSubtotal = !!rowSub && !!colSub;
+
+  /* ヘッダー */
+  var html = "<thead><tr><th class='corner'>Wellbeing</th>";
+  for (var c = 0; c < cols.length; c++) {
+    html += "<th class='col-header'><span>" + cols[c] + "</span></th>";
+  }
+  if (hasSubtotal) {
+    html += "<th class='col-header subtotal-header'><span>小計</span></th>";
+  }
+  html += "</tr></thead><tbody>";
+
+  /* 本体 */
+  for (var i = 0; i < rows.length; i++) {
+    html += "<tr><th class='row-header'>" + rows[i] + "</th>";
+    for (var j = 0; j < cols.length; j++) {
+      if (IS_SYM && rows[i] === cols[j]) {
+        html += "<td class='diag-cell'></td>";
+        continue;
+      }
+      var val = (matrix[i] || [])[j];
+      var cnt = (counts[i] || [])[j];
+      if (cnt === undefined || cnt === null) cnt = 0;
+      if (val === null || val === undefined) {
+        html += "<td class='null-cell'>-</td>";
+        continue;
+      }
+      if (cnt === 0) {
+        html += "<td class='diag-cell'></td>";
+        continue;
+      }
+      var isLowSup = (cnt <= MIN_SUP && cnt > 0);
+      var cls = isLowSup ? "low-support" : "";
+      var display;
+      if (metric === "count") {
+        display = String(Math.round(val));
+      } else if (metric === "pv_deviation") {
+        display = val.toFixed(1);
+      } else {
+        display = val.toFixed(3);
+      }
+      var stAttr = "";
+      if (!isLowSup) {
+        var st = getCellStyle(val, metric, flat);
+        stAttr = " style='background:" + st.bg + ";color:" + st.fg + "'";
+      }
+      html += "<td class='" + cls + "'" + stAttr
+            + " data-r='" + rows[i] + "' data-c='" + cols[j] + "'"
+            + " onclick='onCellClick(this)'>" + display + "</td>";
+    }
+
+    /* 行末の小計セル */
+    if (hasSubtotal) {
+      var rv = rowSub[i];
+      if (rv === null || rv === undefined || rv === 0) {
+        html += "<td class='subtotal'>-</td>";
+      } else {
+        var rDisp = (metric === "count") ? String(Math.round(rv)) : rv.toFixed(1);
+        var rSt = getCellStyle(rv, metric, flat);
+        html += "<td class='subtotal'"
+              + " style='background:" + rSt.bg + ";color:" + rSt.fg + "'"
+              + " data-tag='" + rows[i] + "' data-axis='row'"
+              + " onclick='onSubtotalClick(this)'>" + rDisp + "</td>";
+      }
+    }
+    html += "</tr>";
+  }
+
+  /* 末尾の小計行 */
+  if (hasSubtotal) {
+    html += "<tr><th class='row-header subtotal-header'>小計</th>";
+    for (var j = 0; j < cols.length; j++) {
+      var cv = colSub[j];
+      if (cv === null || cv === undefined || cv === 0) {
+        html += "<td class='subtotal'>-</td>";
+        continue;
+      }
+      var cDisp = (metric === "count") ? String(Math.round(cv)) : cv.toFixed(1);
+      var cSt = getCellStyle(cv, metric, flat);
+      html += "<td class='subtotal'"
+            + " style='background:" + cSt.bg + ";color:" + cSt.fg + "'"
+            + " data-tag='" + cols[j] + "' data-axis='col'"
+            + " onclick='onSubtotalClick(this)'>" + cDisp + "</td>";
+    }
+    /* 右下角は空欄 */
+    html += "<td class='subtotal'>-</td>";
+    html += "</tr>";
+  }
+
+  html += "</tbody>";
+  document.getElementById("heatmap").innerHTML = html;
+}
+
+function onCellClick(td) {
+  var row = td.getAttribute("data-r");
+  var col = td.getAttribute("data-c");
+  if (!row || !col) return;
+  showModal(row, col);
+}
+
+function onSubtotalClick(td) {
+  var tag  = td.getAttribute("data-tag");
+  var axis = td.getAttribute("data-axis");
+  if (!tag || !axis) return;
+  showSubtotalModal(tag, axis);
+}
+
+function showSubtotalModal(tag, axis) {
+  var period = document.getElementById("sel-period").value;
+  var area   = document.getElementById("sel-area").value;
+  var slice  = (SCORES.data[period] || {})[area] || {};
+  var bucket = ((DETAIL || {})[period] || {})[area] || {};
+
+  var idx = (axis === "row") ? SCORES.rows.indexOf(tag) : SCORES.cols.indexOf(tag);
+
+  /* タグ小計（ユニーク件数・PV合計） */
+  var tagCount = 0, tagPv = 0;
+  var sub = (axis === "row") ? slice.row_subtotal : slice.col_subtotal;
+  if (sub && idx >= 0) {
+    tagCount = (sub.count  || [])[idx] || 0;
+    tagPv    = (sub.pv_sum || [])[idx] || 0;
+  }
+
+  /* 全体合計（ユニーク件数・PV合計、両軸の和集合相当として row_subtotal の合計を使う） */
+  var totalCount = 0, totalPv = 0;
+  /* イベント収集を先に行ってユニーク総件数を出す */
+  var seen = {};
+  var events = [];
+  for (var key in bucket) {
+    var parts = key.split("|");
+    if (parts.length !== 2) continue;
+    var matches;
+    if (IS_SYM) {
+      matches = (parts[0] === tag || parts[1] === tag);
+    } else {
+      matches = (axis === "row" ? parts[0] === tag : parts[1] === tag);
+    }
+    if (!matches) continue;
+    var arr = bucket[key];
+    for (var k = 0; k < arr.length; k++) {
+      var e = arr[k];
+      if (!seen[e.event_id]) {
+        seen[e.event_id] = true;
+        events.push(e);
+      }
+    }
+  }
+
+  /* 全体ユニーク件数・PV合計（detail 全体から集計） */
+  var allSeen = {};
+  for (var key2 in bucket) {
+    var arr2 = bucket[key2];
+    for (var k2 = 0; k2 < arr2.length; k2++) {
+      var e2 = arr2[k2];
+      if (!allSeen[e2.event_id]) {
+        allSeen[e2.event_id] = { pv: e2.pv || 0 };
+        totalCount++;
+        totalPv += (e2.pv || 0);
+      }
+    }
+  }
+
+  /* PV中央値 */
+  var pvList = [];
+  for (var k3 = 0; k3 < events.length; k3++) {
+    if (events[k3].pv > 0) pvList.push(events[k3].pv);
+  }
+  var cellMedian = calcMedian(pvList);
+  var muVal  = slice.pv_median_mu_sub || slice.pv_median_mu || 0;
+  var devVal = (sub && sub.pv_deviation) ? (sub.pv_deviation[idx] || 0) : 0;
+
+  /* 割合 */
+  var pctCnt = totalCount > 0 ? (tagCount / totalCount * 100).toFixed(1) : "-";
+  var pctPv  = totalPv    > 0 ? (tagPv    / totalPv    * 100).toFixed(1) : "-";
+
+  document.getElementById("modal-title").innerHTML =
+    tag + "（" + tagCount + "件 / " + fmtPv(tagPv) + " PV）"
+    + "<div class='modal-tag-counts'>"
+    + "全体（" + totalCount + "件 / " + fmtPv(totalPv) + " PV）<br>"
+    + " … 当該件数占有率 <span class='pct'>" + pctCnt + "%</span>"
+    + "（" + tagCount + "件 / " + totalCount + "件）"
+    + " … 当該PV占有率 <span class='pct'>" + pctPv + "%</span>"
+    + "（" + fmtPv(tagPv) + " PV / " + fmtPv(totalPv) + " PV）<br>"
+    + "タグPV中央値 <span class='pct'>" + fmtPv(cellMedian) + " PV</span>"
+    + "（全体の標準値 " + fmtPv(muVal) + " PV）"
+    + " → 偏差値 <span class='pct'>" + devVal.toFixed(1) + "</span>"
+    + "</div>";
+
+  modalRows  = events.slice();
+  sortColIdx = -1;
+  sortAsc    = true;
+  renderDetailTable(modalRows);
+  document.getElementById("modal-overlay").classList.add("active");
+}
+
+var sortColIdx = -1;
+var sortAsc    = true;
+var modalRows  = [];
+
+function calcMedian(arr) {
+  var sorted = arr.slice().sort(function(a, b) { return a - b; });
+  var n = sorted.length;
+  if (n === 0) return 0;
+  if (n % 2 === 0) return (sorted[n/2 - 1] + sorted[n/2]) / 2;
+  return sorted[Math.floor(n/2)];
+}
+
+function fmtPv(n) { return Math.round(n).toLocaleString(); }
+
+function showModal(row, col) {
+  var period = document.getElementById("sel-period").value;
+  var area   = document.getElementById("sel-area").value;
+  var key    = row + "|" + col;
+  var bucket = ((DETAIL || {})[period] || {})[area] || {};
+  var events = bucket[key] || [];
+
+  var slice  = (SCORES.data[period] || {})[area] || {};
+  var counts = slice.count  || [];
+  var pvs    = slice.pv_sum || [];
+  var ri = SCORES.rows.indexOf(row);
+  var ci = SCORES.cols.indexOf(col);
+
+  /* セルの値 */
+  var cellCount = (ri >= 0 && ci >= 0) ? ((counts[ri] || [])[ci] || 0) : 0;
+  var cellPv    = (ri >= 0 && ci >= 0) ? ((pvs[ri]    || [])[ci] || 0) : 0;
+
+  /* 行合計 */
+  var rowCount = 0, rowPv = 0;
+  if (ri >= 0) {
+    for (var j = 0; j < SCORES.cols.length; j++) {
+      rowCount += ((counts[ri] || [])[j]) || 0;
+      rowPv    += ((pvs[ri]    || [])[j]) || 0;
+    }
+  }
+
+  /* 列合計 */
+  var colCount = 0, colPv = 0;
+  if (ci >= 0) {
+    for (var i = 0; i < SCORES.rows.length; i++) {
+      colCount += ((counts[i] || [])[ci]) || 0;
+      colPv    += ((pvs[i]    || [])[ci]) || 0;
+    }
+  }
+
+  /* 割合 */
+  var pctPvOfRow  = rowPv    > 0 ? (cellPv    / rowPv    * 100).toFixed(1) : "-";
+  var pctPvOfCol  = colPv    > 0 ? (cellPv    / colPv    * 100).toFixed(1) : "-";
+  var pctCntOfRow = rowCount > 0 ? (cellCount / rowCount * 100).toFixed(1) : "-";
+  var pctCntOfCol = colCount > 0 ? (cellCount / colCount * 100).toFixed(1) : "-";
+
+  /* PVカンマ区切り */
+  function fmt(n) { return Math.round(n).toLocaleString(); }
+
+  /* セルのPV中央値（PV>0 のイベントから算出） */
+  var pvList = [];
+  for (var k = 0; k < events.length; k++) {
+    if (events[k].pv > 0) pvList.push(events[k].pv);
+  }
+  var cellMedian = calcMedian(pvList);
+  var muVal  = slice.pv_median_mu || 0;
+  var devVal = (((slice.pv_deviation || [])[ri] || [])[ci]) || 0;
+
+  document.getElementById("modal-title").innerHTML =
+    row + " × " + col
+    + "（" + cellCount + "件 / " + fmt(cellPv) + " PV）"
+    + "<div class='modal-tag-counts'>"
+    + row + "（" + rowCount + "件 / " + fmt(rowPv) + " PV）<br>"
+    + " … 当該件数占有率 <span class='pct'>" + pctCntOfRow + "%</span>"
+    + "（" + cellCount + "件 / " + rowCount + "件）"
+    + " … 当該PV占有率 <span class='pct'>" + pctPvOfRow + "%</span>"
+    + "（" + fmt(cellPv) + " PV / " + fmt(rowPv) + " PV）<br>"
+    + col + "（" + colCount + "件 / " + fmt(colPv) + " PV）<br>"
+    + " … 当該件数占有率 <span class='pct'>" + pctCntOfCol + "%</span>"
+    + "（" + cellCount + "件 / " + colCount + "件）"
+    + " … 当該PV占有率 <span class='pct'>" + pctPvOfCol + "%</span>"
+    + "（" + fmt(cellPv) + " PV / " + fmt(colPv) + " PV）<br>"
+    + "セルPV中央値 <span class='pct'>" + fmtPv(cellMedian) + " PV</span>"
+    + "（全体の標準値 " + fmtPv(muVal) + " PV）"
+    + " → 偏差値 <span class='pct'>" + devVal.toFixed(1) + "</span>"
+    + "</div>";
+
+  modalRows  = events.slice();
+  sortColIdx = -1;
+  sortAsc    = true;
+  renderDetailTable(modalRows);
+  document.getElementById("modal-overlay").classList.add("active");
+}
+
+function renderDetailTable(data) {
+  var cols = [
+    { key: "event_id",   label: "ID",         align: "left"  },
+    { key: "event_name", label: "イベント名", align: "left"  },
+    { key: "spot_name",  label: "スポット",   align: "left"  },
+    { key: "pv",         label: "PV",         align: "right" }
+  ];
+  var html = "<thead><tr>";
+  for (var ci = 0; ci < cols.length; ci++) {
+    var icon = (sortColIdx === ci) ? (sortAsc ? " ▲" : " ▼") : " ⇅";
+    html += "<th onclick='sortDetail(" + ci + ")'>"
+          + cols[ci].label + "<span class='si'>" + icon + "</span></th>";
+  }
+  html += "</tr></thead><tbody>";
+  if (data.length === 0) {
+    html += "<tr><td colspan='4' style='text-align:center;color:#5f6368;padding:24px'>"
+          + "該当イベントなし</td></tr>";
+  } else {
+    for (var ri = 0; ri < data.length; ri++) {
+      var r = data[ri];
+      html += "<tr>"
+            + "<td style='font-family:monospace;color:#5f6368;font-size:12px'>"
+            + (r.event_id   || "") + "</td>"
+            + "<td>" + (r.event_name || "") + "</td>"
+            + "<td>" + (r.spot_name  || "") + "</td>"
+            + "<td style='text-align:right'>" + (r.pv != null ? r.pv : "") + "</td>"
+            + "</tr>";
+    }
+  }
+  html += "</tbody>";
+  document.getElementById("detail-table").innerHTML = html;
+}
+
+function sortDetail(idx) {
+  var keys = ["event_id", "event_name", "spot_name", "pv"];  // event_id追加
+  if (sortColIdx === idx) { sortAsc = !sortAsc; }
+  else { sortColIdx = idx; sortAsc = true; }
+  var k = keys[idx];
+  modalRows.sort(function(a, b) {
+    var va = a[k] != null ? a[k] : "";
+    var vb = b[k] != null ? b[k] : "";
+    if (typeof va === "number" && typeof vb === "number") {
+      return sortAsc ? va - vb : vb - va;
+    }
+    var sa = String(va), sb = String(vb);
+    var cmp = sa.localeCompare(sb, "ja");
+    return sortAsc ? cmp : -cmp;
+  });
+  renderDetailTable(modalRows);
+}
+
+document.getElementById("modal-overlay").addEventListener("click", function(e) {
+  if (e.target === this) this.classList.remove("active");
+});
+document.getElementById("modal-close").addEventListener("click", function() {
+  document.getElementById("modal-overlay").classList.remove("active");
+});
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    document.getElementById("modal-overlay").classList.remove("active");
+  }
+});
+
+document.getElementById("min-sup-val").textContent = MIN_SUP;
+var rawTs = SCORES.meta.generated_at || "";
+if (rawTs) {
+  document.getElementById("gen-at").textContent =
+    rawTs.replace("T", " ").substring(0, 19) + " (JST)";
+} else {
+  document.getElementById("gen-at").textContent = "";
+}
+document.getElementById("sel-period").addEventListener("change", render);
+document.getElementById("sel-area").addEventListener("change", render);
+document.getElementById("sel-metric").addEventListener("change", render);
+render();
+</script>
+</body>
+</html>
