@@ -1497,7 +1497,11 @@
           }
         });
 
-        const labels = Object.keys(categoryStats).sort();
+        const labels = Object.keys(categoryStats).sort((a, b) => {
+          const avgA = categoryStats[a].count ? categoryStats[a].total / categoryStats[a].count : 0;
+          const avgB = categoryStats[b].count ? categoryStats[b].total / categoryStats[b].count : 0;
+          return avgB - avgA;
+        });
         const averages = labels.map(l => categoryStats[l].count ? Math.round((categoryStats[l].total / categoryStats[l].count) * 10) / 10 : 0);
 
         if (state.charts.ch2) state.charts.ch2.destroy();
