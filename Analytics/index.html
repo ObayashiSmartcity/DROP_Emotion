@@ -10,6 +10,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="./config.js"></script>
+  <script src="./rename.js"></script>
   <script src="./tooltip.js"></script>
 
   <style>
@@ -1173,6 +1174,10 @@
       const $ = id => document.getElementById(id);
       const getThemeValue = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       const getColorConfig = () => window.COLOR_CONFIG[state.theme] || window.COLOR_CONFIG.light;
+      const renameEventType = value => {
+        if (typeof window.renamePostedCollabEventName === 'function') return window.renamePostedCollabEventName(value);
+        return value ?? '';
+      };
 
       // 共通データ処理ユーティリティ
       const getUniquePostCount = data => new Set(data.map(x => x.artwork_id)).size;
@@ -1240,10 +1245,11 @@
           const cb = document.createElement('input');
           cb.type = 'checkbox';
           cb.value = v;
+          cb.dataset.label = id === 'fT' ? renameEventType(v) : v;
           if (prevChecked.has(v)) cb.checked = true;
           cb.addEventListener('change', () => { updateToggleText(id); applyFilters(); });
           const span = document.createElement('span');
-          span.textContent = v;
+          span.textContent = cb.dataset.label;
           label.appendChild(cb);
           label.appendChild(span);
           dropdown.appendChild(label);
@@ -1256,16 +1262,17 @@
       function updateToggleText(id) {
         const wrap = $(id);
         const toggle = wrap.querySelector('.ms-toggle');
-        const checked = getMultiSelectValues(id);
-        if (checked.length === 0) toggle.textContent = 'すべて ▾';
-        else if (checked.length === 1) toggle.textContent = checked[0] + ' ▾';
-        else toggle.textContent = checked.length + '件選択中 ▾';
+        const checkedBoxes = Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked'));
+        const checkedLabels = checkedBoxes.map(cb => cb.dataset.label || cb.value);
+        if (checkedLabels.length === 0) toggle.textContent = 'すべて ▾';
+        else if (checkedLabels.length === 1) toggle.textContent = checkedLabels[0] + ' ▾';
+        else toggle.textContent = checkedLabels.length + '件選択中 ▾';
       }
 
       function initFilters() {
         const getUniqValues = key => [...new Set(state.raw.map(d => d[key]).filter(v => v !== undefined && v !== null && v !== ''))].sort();
         
-        populateSelect('fT', getUniqValues('tenant'));
+        populateSelect('fT', getUniqValues('posted_collab_event_name')); // イベント種別の参照先を tenant -> posted_collab_event_name に変更
         populateSelect('fG', getUniqValues('gender'));
         populateSelect('fA', getUniqValues('age_group'));
         populateSelect('fAG', getUniqValues('nearest_AreaGroup'));
@@ -1411,7 +1418,7 @@
 
       function applyFilters() {
         const filters = {
-          tenant: getMultiSelectValues('fT'),
+          eventType: getMultiSelectValues('fT'),
           gender: getMultiSelectValues('fG'),
           age: getMultiSelectValues('fA'),
           areaGroup: getMultiSelectValues('fAG'),
@@ -1427,7 +1434,7 @@
         );
         state.filteredRecs = state.raw.filter(d => {
           if (excludeIds.size && excludeIds.has(String(d.artwork_id))) return false;
-          if (filters.tenant.length && !filters.tenant.includes(d.tenant)) return false;
+          if (filters.eventType.length && !filters.eventType.includes(d.posted_collab_event_name)) return false;
           if (filters.gender.length && !filters.gender.includes(d.gender)) return false;
           if (filters.age.length && !filters.age.includes(d.age_group)) return false;
           if (filters.areaGroup.length && !filters.areaGroup.includes(d.nearest_AreaGroup)) return false;
@@ -2091,6 +2098,7 @@
             <tr><th>性別</th><td>${basePost.gender || '-'}</td></tr>
             <tr><th>年代</th><td>${basePost.age_group || '-'} (${basePost.age_group_half || '-'})</td></tr>
             <tr><th>投稿日時</th><td>${basePost.post_dated_at || '-'}</td></tr>
+            <tr><th>イベント種別</th><td>${renameEventType(basePost.posted_collab_event_name) || '-'}</td></tr>
             <tr><th>エリア</th><td>${basePost.nearest_AreaGroup || ''} / ${basePost.nearest_Area || ''}</td></tr>
             <tr><th>座標</th><td>${basePost.latitude || '-'}, ${basePost.longitude || '-'}</td></tr>
           </table>
