@@ -7,9 +7,10 @@
 // 未設定の値は元の名称のまま表示されます。
 
 window.POSTED_COLLAB_EVENT_NAME_RENAME_MAP = window.POSTED_COLLAB_EVENT_NAME_RENAME_MAP || {
-  // 例:
-  // 'tenant_a': 'イベントA',
-  // 'tenant_b': 'イベントB',
+  'ikefes-2025': '2025年度イケフェス',
+  'kenchikusai-2026': '2026年度東京建築祭',
+  'shinagawa-natsufes-2025': '2025年度品川にほんの夏フェス',
+  'unkown-asia-extra-2026': '2026年度Unknown Asia',
 };
 
 window.renamePostedCollabEventName = function (value) {
