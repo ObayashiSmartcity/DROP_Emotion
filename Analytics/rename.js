@@ -10,7 +10,7 @@ window.POSTED_COLLAB_EVENT_NAME_RENAME_MAP = window.POSTED_COLLAB_EVENT_NAME_REN
   'ikefes-2025': 'イケフェス大阪2025',
   'kenchikusai-2026': '東京建築祭2026',
   'shinagawa-natsufes-2025': '品川にほんの夏フェス2025',
-  'unknown-asia-extra-2026': 'Unknown Asia Extra2026',
+  'unknown-asia-extra-2026': 'UnknownAsiaExtra2026',
 };
 
 window.renamePostedCollabEventName = function (value) {
