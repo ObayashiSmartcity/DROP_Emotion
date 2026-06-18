@@ -289,14 +289,10 @@ function getCellStyle(value, metric, flatVals) {
   }
 
   if (metric === "pv_deviation") {
-    /* center=50, 青(低)→白(50)→緑(高), ±30で最大色 */
-    var ratio = (value - 50) / 30;
-    t = Math.min(Math.abs(ratio), 1) * 0.65;
-    if (ratio < 0) {
-      r = lerp(255, 26, t); g = lerp(255, 115, t); b = lerp(255, 232, t);
-    } else {
-      r = lerp(255, 52, t); g = lerp(255, 168, t); b = lerp(255, 83, t);
-    }
+    /* 47=白基準, 70=最大色（白→青） */
+    var ratio = (value - 47) / (70 - 47);
+    t = Math.max(0, Math.min(ratio, 1)) * 0.65;
+    r = lerp(255, 26, t); g = lerp(255, 115, t); b = lerp(255, 232, t);
     return { bg: rgbStr(r, g, b), fg: t > 0.35 ? "#fff" : "#202124" };
   }
 
@@ -308,10 +304,10 @@ function updateLegend(metric) {
   var lo   = document.getElementById("legend-low");
   var hi   = document.getElementById("legend-high");
   if (metric === "pv_deviation") {
-    grad.style.background = "linear-gradient(to right, #1a73e8, #fff 50%, #34a853)";
+    grad.style.background = "linear-gradient(to right, #fff, #1a73e8)";
     lo.textContent = "低"; hi.textContent = "高";
   } else {
-    /* pv_median, count: 白→緑 */
+    /* count: 白→緑 */
     grad.style.background = "linear-gradient(to right, #fff, #34a853)";
     lo.textContent = "0"; hi.textContent = "多";
   }
